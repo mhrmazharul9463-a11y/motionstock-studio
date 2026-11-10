@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Flip diagnostic</title>
+<style>
+  body { font-family: monospace; background: #111; color: #eee; padding: 10px; }
+  pre { background: #222; padding: 10px; white-space: pre-wrap; word-break: break-all; }
+  canvas, iframe { border: 2px solid #555; display: block; margin: 10px 0; }
+  h2 { margin: 14px 0 4px; }
+</style>
+</head>
+<body>
+<h1>Flip diagnostic (virtual t=1400ms, mid-flip 10→9)</h1>
+<h2>Debug</h2>
+<pre id="dbg">running…</pre>
+<h2>Live iframe (virtual time frozen at 1400ms)</h2>
+<div style="width:640px;height:360px;overflow:hidden"><iframe id="rf" width="1280" height="720" style="transform:scale(0.5);transform-origin:top left;border:0"></iframe></div>
+<h2>Captured bitmap via captureFrame()</h2>
+<canvas id="cv" width="640" height="360"></canvas>
+<script>
+const VCLOCK = `(function(){var vt=0,seed=1234567;var _Date=Date;
+function RDate(){return arguments.length?new _Date(...arguments):new _Date(vt)}
+RDate.now=function(){return vt};RDate.parse=_Date.parse;RDate.UTC=_Date.UTC;window.Date=RDate;
+try{Object.defineProperty(window.performance,"now",{value:function(){return vt}})}catch(e){}
+Math.random=function(){seed=(seed*1103515245+12345)%2147483648;return seed/2147483648};
+var timers=[],tid=0;
+window.setTimeout=function(fn,ms){var id=++tid;timers.push({id:id,at:vt+(ms||0),fn:fn,rep:0});return id};
+window.setInterval=function(fn,ms){var id=++tid;timers.push({id:id,at:vt+(ms||0),fn:fn,rep:ms||0});return id};
+window.clearTimeout=function(id){timers=timers.filter(function(t){return t.id!==id})};
+window.clearInterval=window.clearTimeout;
+window.requestAnimationFrame=function(fn){return window.setTimeout(function(){fn(vt)},16)};
+window.__vcAdvance=function(t){vt=t;var due=timers.filter(function(x){return x.at<=vt});
+timers=timers.filter(function(x){return x.at>vt});
+due.forEach(function(x){try{x.fn()}catch(e){} if(x.rep){timers.push({id:x.id,at:vt+x.rep,fn:x.fn,rep:x.rep})}});};
+window.__vcSet=function(t){vt=t};})();`;
+
+function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+async function captureFrame(win, W, H) {
+  const doc = win.document;
+  try { doc.getAnimations().forEach((a) => { try { a.pause(); } catch (e) {} }); } catch (e) {}
+  const clone = doc.cloneNode(true);
+  try {
+    const origEls = [doc.documentElement, ...doc.querySelectorAll("*")];
+    const cloneEls = [clone.documentElement, ...clone.querySelectorAll("*")];
+    for (let i = 0; i < cloneEls.length && i < origEls.length; i++) {
+      try {
+        const cs = win.getComputedStyle(origEls[i]);
+        cloneEls[i].setAttribute("style", cs.cssText);
+        cloneEls[i].style.setProperty("animation", "none", "important");
+        cloneEls[i].style.setProperty("transition", "none", "important");
+      } catch (e) {}
+    }
+  } catch (e) {}
+  clone.querySelectorAll("canvas").forEach((c) => {
+    try { const img = clone.createElement("img"); img.setAttribute("src", c.toDataURL("image/png")); img.setAttribute("width", c.width); img.setAttribute("height", c.height); c.replaceWith(img); } catch (e) {}
+  });
+  clone.querySelectorAll("script").forEach((s) => s.remove());
+  const styles = Array.from(clone.querySelectorAll("style")).map((s) => s.textContent).join("\n");
+  const bodyXml = clone.body ? new XMLSerializer().serializeToString(clone.body) : "";
+  const inner = '<div xmlns="http://www.w3.org/1999/xhtml" style="width:' + W + 'px;height:' + H + 'px;margin:0;padding:0;overflow:hidden"><style>' + styles + '</style>' + bodyXml + '</div>';
+  const fullDoc = new XMLSerializer().serializeToString(clone);
+  const svgs = [
+    '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '"><foreignObject width="100%" height="100%">' + inner + "</foreignObject></svg>",
+    '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '"><foreignObject width="100%" height="100%">' + fullDoc + "</foreignObject></svg>"
+  ];
+  const img = new Image();
+  let loaded = false;
+  for (const svg of svgs) {
+    const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    try {
+      await new Promise((res, rej) => {
+        const to = setTimeout(() => rej(new Error("timeout")), 8000);
+        img.onload = () => { clearTimeout(to); res(); };
+        img.onerror = () => { clearTimeout(to); rej(new Error("load error")); };
+        img.src = url;
+      });
+      loaded = true; break;
+    } catch (e) {}
+  }
+  if (!loaded) throw new Error("Frame-er chobi load hoyni (SVG foreignObject)");
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d"); ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(img, 0, 0, W, H);
+  return createImageBitmap(cv);
+}
+
+async function main() {
+  const dbg = document.getElementById("dbg");
+  const raw = atob("PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImVuIj4KPGhlYWQ+CjxtZXRhIGNoYXJzZXQ9IlVURi04Ij4KPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCwgaW5pdGlhbC1zY2FsZT0xLjAiPgo8dGl0bGU+UHJlbWl1bSBGbGlwIENvdW50ZG93bjwvdGl0bGU+Cgo8c3R5bGU+CiogewogIG1hcmdpbjogMDsKICBwYWRkaW5nOiAwOwogIGJveC1zaXppbmc6IGJvcmRlci1ib3g7Cn0KCmJvZHkgewogIHdpZHRoOiAxMDAlOwogIGhlaWdodDogMTAwdmg7CiAgb3ZlcmZsb3c6IGhpZGRlbjsKICBkaXNwbGF5OiBmbGV4OwogIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgYmFja2dyb3VuZDoKICAgIHJhZGlhbC1ncmFkaWVudChlbGxpcHNlIGF0IGNlbnRlciwgIzIwMmEzYSAwJSwgIzBiMTAxOSA1NSUsICMwNTA4MGUgMTAwJSk7CiAgZm9udC1mYW1pbHk6IEFyaWFsLCBzYW5zLXNlcmlmOwogIGNvbG9yOiB3aGl0ZTsKfQoKLmNsb2NrLWNvbnRhaW5lciB7CiAgdGV4dC1hbGlnbjogY2VudGVyOwogIHdpZHRoOiAxMDAlOwp9CgoubGFiZWwgewogIGZvbnQtc2l6ZTogMTdweDsKICBsZXR0ZXItc3BhY2luZzogOXB4OwogIGNvbG9yOiAjOTFhNGJkOwogIG1hcmdpbi1ib3R0b206IDM4cHg7CiAgdGV4dC10cmFuc2Zvcm06IHVwcGVyY2FzZTsKfQoKLmNsb2NrIHsKICBkaXNwbGF5OiBmbGV4OwogIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgZ2FwOiAxNXB4OwogIHBlcnNwZWN0aXZlOiAxMjAwcHg7Cn0KCi5ncm91cCB7CiAgZGlzcGxheTogZmxleDsKICBnYXA6IDEycHg7Cn0KCi5jYXJkIHsKICBwb3NpdGlvbjogcmVsYXRpdmU7CiAgd2lkdGg6IDE0NXB4OwogIGhlaWdodDogMTkwcHg7CiAgYm9yZGVyLXJhZGl1czogMTVweDsKICBwZXJzcGVjdGl2ZTogMTAwMHB4OwogIHRyYW5zZm9ybS1zdHlsZTogcHJlc2VydmUtM2Q7CiAgYmFja2dyb3VuZDogIzEwMTcyMjsKICBib3gtc2hhZG93OgogICAgMCAyMnB4IDQ1cHggcmdiYSgwLDAsMCwuNjUpLAogICAgMCAwIDIycHggcmdiYSg2NywxNTcsMjU1LC4xMiksCiAgICBpbnNldCAwIDFweCAxcHggcmdiYSgyNTUsMjU1LDI1NSwuMTIpOwp9CgouaGFsZiB7CiAgcG9zaXRpb246IGFic29sdXRlOwogIGxlZnQ6IDA7CiAgd2lkdGg6IDEwMCU7CiAgaGVpZ2h0OiA1MCU7CiAgb3ZlcmZsb3c6IGhpZGRlbjsKICBiYWNrZ3JvdW5kOiBsaW5lYXItZ3JhZGllbnQoMTQ1ZGVnLCAjMzAzYzRkLCAjMTQxYzI4KTsKICBib3JkZXI6IDFweCBzb2xpZCByZ2JhKDI1NSwyNTUsMjU1LC4wNyk7Cn0KCi5oYWxmIHNwYW4sCi5mbGlwcGVyIHNwYW4gewogIHBvc2l0aW9uOiBhYnNvbHV0ZTsKICBsZWZ0OiAwOwogIHdpZHRoOiAxMDAlOwogIGhlaWdodDogMTkwcHg7CiAgZGlzcGxheTogZmxleDsKICBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlcjsKICBhbGlnbi1pdGVtczogY2VudGVyOwogIGZvbnQtc2l6ZTogMTI1cHg7CiAgZm9udC13ZWlnaHQ6IDgwMDsKICBsaW5lLWhlaWdodDogMTkwcHg7CiAgZm9udC1mYW1pbHk6ICJBcmlhbCIsIHNhbnMtc2VyaWY7CiAgY29sb3I6ICNlZGY1ZmY7CiAgdGV4dC1zaGFkb3c6IDAgM3B4IDJweCByZ2JhKDI1NSwyNTUsMjU1LC4yKSwKICAgICAgICAgICAgICAgMCA4cHggMThweCByZ2JhKDAsMCwwLC43KTsKfQoKLnRvcCB7CiAgdG9wOiAwOwogIGJvcmRlci1yYWRpdXM6IDE1cHggMTVweCAwIDA7CiAgei1pbmRleDogMTsKfQoKLnRvcCBzcGFuIHsKICB0b3A6IDA7Cn0KCi5ib3R0b20gewogIGJvdHRvbTogMDsKICBib3JkZXItcmFkaXVzOiAwIDAgMTVweCAxNXB4OwogIGJhY2tncm91bmQ6IGxpbmVhci1ncmFkaWVudCgxNDVkZWcsICMxYzI3MzYsICMwZDE0MWUpOwogIHotaW5kZXg6IDA7Cn0KCi5ib3R0b20gc3BhbiB7CiAgdG9wOiAtOTVweDsKfQoKLmRpdmlkZXIgewogIHBvc2l0aW9uOiBhYnNvbHV0ZTsKICBsZWZ0OiAwOwogIHRvcDogNTAlOwogIHdpZHRoOiAxMDAlOwogIGhlaWdodDogM3B4OwogIGJhY2tncm91bmQ6ICMwNTBhMTE7CiAgei1pbmRleDogODsKICBib3gtc2hhZG93OiAwIDFweCAycHggcmdiYSgyNTUsMjU1LDI1NSwuMTMpOwp9CgouZmxpcHBlciB7CiAgcG9zaXRpb246IGFic29sdXRlOwogIGxlZnQ6IDA7CiAgd2lkdGg6IDEwMCU7CiAgaGVpZ2h0OiA1MCU7CiAgb3ZlcmZsb3c6IGhpZGRlbjsKICBiYWNrZmFjZS12aXNpYmlsaXR5OiBoaWRkZW47CiAgLXdlYmtpdC1iYWNrZmFjZS12aXNpYmlsaXR5OiBoaWRkZW47CiAgdHJhbnNmb3JtLXN0eWxlOiBwcmVzZXJ2ZS0zZDsKfQoKLmZsaXBwZXIgc3BhbiB7CiAgdG9wOiAwOwp9CgouZmxpcC10b3AgewogIHRvcDogMDsKICB6LWluZGV4OiA1OwogIHRyYW5zZm9ybS1vcmlnaW46IGJvdHRvbTsKICBib3JkZXItcmFkaXVzOiAxNXB4IDE1cHggMCAwOwogIGJhY2tncm91bmQ6IGxpbmVhci1ncmFkaWVudCgxNDVkZWcsICMzMDNjNGQsICMxNDFjMjgpOwp9CgouZmxpcC1ib3R0b20gewogIGJvdHRvbTogMDsKICB6LWluZGV4OiA0OwogIHRyYW5zZm9ybS1vcmlnaW46IHRvcDsKICB0cmFuc2Zvcm06IHJvdGF0ZVgoOTBkZWcpOwogIGJvcmRlci1yYWRpdXM6IDAgMCAxNXB4IDE1cHg7CiAgYmFja2dyb3VuZDogbGluZWFyLWdyYWRpZW50KDE0NWRlZywgIzFjMjczNiwgIzBkMTQxZSk7Cn0KCi5mbGlwLWJvdHRvbSBzcGFuIHsKICB0b3A6IC05NXB4Owp9CgouZmxpcC10b3AuYW5pbWF0ZSB7CiAgYW5pbWF0aW9uOiBmbGlwVXAgLjMycyBlYXNlLWluIGZvcndhcmRzOwp9CgouZmxpcC1ib3R0b20uYW5pbWF0ZSB7CiAgYW5pbWF0aW9uOiBmbGlwRG93biAuMzJzIGVhc2Utb3V0IC4zMnMgZm9yd2FyZHM7Cn0KCkBrZXlmcmFtZXMgZmxpcFVwIHsKICAwJSB7IHRyYW5zZm9ybTogcm90YXRlWCgwZGVnKTsgfQogIDEwMCUgeyB0cmFuc2Zvcm06IHJvdGF0ZVgoLTkwZGVnKTsgfQp9CgpAa2V5ZnJhbWVzIGZsaXBEb3duIHsKICAwJSB7IHRyYW5zZm9ybTogcm90YXRlWCg5MGRlZyk7IH0KICAxMDAlIHsgdHJhbnNmb3JtOiByb3RhdGVYKDBkZWcpOyB9Cn0KCi5jb2xvbiB7CiAgZm9udC1zaXplOiA5NXB4OwogIGZvbnQtd2VpZ2h0OiBib2xkOwogIGNvbG9yOiAjNjliOWZmOwogIG1hcmdpbjogMCAzcHg7CiAgcGFkZGluZy1ib3R0b206IDE1cHg7CiAgdGV4dC1zaGFkb3c6IDAgMCAyMHB4IHJnYmEoNTQsMTU3LDI1NSwuNyk7CiAgYW5pbWF0aW9uOiBwdWxzZSAxcyBpbmZpbml0ZTsKfQoKQGtleWZyYW1lcyBwdWxzZSB7CiAgNTAlIHsgb3BhY2l0eTogLjM1OyB9Cn0KCi5ib3R0b20tdGV4dCB7CiAgbWFyZ2luLXRvcDogNDJweDsKICBmb250LXNpemU6IDEycHg7CiAgbGV0dGVyLXNwYWNpbmc6IDZweDsKICBjb2xvcjogIzYwNzU4ZTsKfQoKLmdsb3ctbGluZSB7CiAgd2lkdGg6IDE4MHB4OwogIGhlaWdodDogMnB4OwogIG1hcmdpbjogMjJweCBhdXRvIDA7CiAgYmFja2dyb3VuZDogbGluZWFyLWdyYWRpZW50KDkwZGVnLCB0cmFuc3BhcmVudCwgIzQyYWFmZiwgdHJhbnNwYXJlbnQpOwogIGJveC1zaGFkb3c6IDAgMCAxNXB4ICMyOTljZmY7Cn0KPC9zdHlsZT4KPC9oZWFkPgoKPGJvZHk+Cgo8ZGl2IGNsYXNzPSJjbG9jay1jb250YWluZXIiPgoKICA8ZGl2IGNsYXNzPSJsYWJlbCI+Q291bnRkb3duIFRpbWVyPC9kaXY+CgogIDxkaXYgY2xhc3M9ImNsb2NrIj4KICAgIDxkaXYgY2xhc3M9Imdyb3VwIiBpZD0ibWludXRlcyI+PC9kaXY+CiAgICA8ZGl2IGNsYXNzPSJjb2xvbiI+OjwvZGl2PgogICAgPGRpdiBjbGFzcz0iZ3JvdXAiIGlkPSJzZWNvbmRzIj48L2Rpdj4KICA8L2Rpdj4KCiAgPGRpdiBjbGFzcz0iYm90dG9tLXRleHQiPlRJTUUgSVMgUlVOTklORzwvZGl2PgogIDxkaXYgY2xhc3M9Imdsb3ctbGluZSI+PC9kaXY+Cgo8L2Rpdj4KCjxzY3JpcHQ+CmNvbnN0IG1pbnV0ZXNCb3ggPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgibWludXRlcyIpOwpjb25zdCBzZWNvbmRzQm94ID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInNlY29uZHMiKTsKCmZ1bmN0aW9uIGNyZWF0ZURpZ2l0KHBhcmVudCwgZGlnaXQpIHsKICBjb25zdCBjYXJkID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgiZGl2Iik7CiAgY2FyZC5jbGFzc05hbWUgPSAiY2FyZCI7CgogIGNhcmQuaW5uZXJIVE1MID0gYAogICAgPGRpdiBjbGFzcz0iaGFsZiB0b3AiPjxzcGFuPiR7ZGlnaXR9PC9zcGFuPjwvZGl2PgogICAgPGRpdiBjbGFzcz0iaGFsZiBib3R0b20iPjxzcGFuPiR7ZGlnaXR9PC9zcGFuPjwvZGl2PgogICAgPGRpdiBjbGFzcz0iZGl2aWRlciI+PC9kaXY+CiAgYDsKCiAgcGFyZW50LmFwcGVuZENoaWxkKGNhcmQpOwogIHJldHVybiBjYXJkOwp9CgpmdW5jdGlvbiBzZXREaWdpdChjYXJkLCBvbGREaWdpdCwgbmV3RGlnaXQpIHsKICBpZiAob2xkRGlnaXQgPT09IG5ld0RpZ2l0KSByZXR1cm47CgogIGNvbnN0IHRvcEZsaXAgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCJkaXYiKTsKICB0b3BGbGlwLmNsYXNzTmFtZSA9ICJmbGlwcGVyIGZsaXAtdG9wIjsKICB0b3BGbGlwLmlubmVySFRNTCA9IGA8c3Bhbj4ke29sZERpZ2l0fTwvc3Bhbj5gOwoKICBjb25zdCBib3R0b21GbGlwID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgiZGl2Iik7CiAgYm90dG9tRmxpcC5jbGFzc05hbWUgPSAiZmxpcHBlciBmbGlwLWJvdHRvbSI7CiAgYm90dG9tRmxpcC5pbm5lckhUTUwgPSBgPHNwYW4+JHtuZXdEaWdpdH08L3NwYW4+YDsKCiAgY2FyZC5hcHBlbmRDaGlsZCh0b3BGbGlwKTsKICBjYXJkLmFwcGVuZENoaWxkKGJvdHRvbUZsaXApOwoKICByZXF1ZXN0QW5pbWF0aW9uRnJhbWUoKCkgPT4gewogICAgdG9wRmxpcC5jbGFzc0xpc3QuYWRkKCJhbmltYXRlIik7CiAgICBib3R0b21GbGlwLmNsYXNzTGlzdC5hZGQoImFuaW1hdGUiKTsKICB9KTsKCiAgYm90dG9tRmxpcC5hZGRFdmVudExpc3RlbmVyKCJhbmltYXRpb25lbmQiLCAoKSA9PiB7CiAgICBjYXJkLnF1ZXJ5U2VsZWN0b3IoIi50b3Agc3BhbiIpLnRleHRDb250ZW50ID0gbmV3RGlnaXQ7CiAgICBjYXJkLnF1ZXJ5U2VsZWN0b3IoIi5ib3R0b20gc3BhbiIpLnRleHRDb250ZW50ID0gbmV3RGlnaXQ7CgogICAgdG9wRmxpcC5yZW1vdmUoKTsKICAgIGJvdHRvbUZsaXAucmVtb3ZlKCk7CiAgfSwgeyBvbmNlOiB0cnVlIH0pOwp9CgpsZXQgY3VycmVudERpZ2l0cyA9IFsiMCIsICIwIiwgIjEiLCAiMCJdOwpsZXQgY2FyZHMgPSBbXTsKCmZvciAobGV0IGkgPSAwOyBpIDwgNDsgaSsrKSB7CiAgY29uc3QgcGFyZW50ID0gaSA8IDIgPyBtaW51dGVzQm94IDogc2Vjb25kc0JveDsKICBjYXJkcy5wdXNoKGNyZWF0ZURpZ2l0KHBhcmVudCwgY3VycmVudERpZ2l0c1tpXSkpOwp9CgpsZXQgcmVtYWluaW5nID0gMTA7CgpmdW5jdGlvbiB1cGRhdGVDbG9jaygpIHsKICBjb25zdCBtaW5zID0gU3RyaW5nKE1hdGguZmxvb3IocmVtYWluaW5nIC8gNjApKS5wYWRTdGFydCgyLCAiMCIpOwogIGNvbnN0IHNlY3MgPSBTdHJpbmcocmVtYWluaW5nICUgNjApLnBhZFN0YXJ0KDIsICIwIik7CgogIGNvbnN0IG5ld0RpZ2l0cyA9IChtaW5zICsgc2Vjcykuc3BsaXQoIiIpOwoKICBuZXdEaWdpdHMuZm9yRWFjaCgoZGlnaXQsIGluZGV4KSA9PiB7CiAgICBpZiAoZGlnaXQgIT09IGN1cnJlbnREaWdpdHNbaW5kZXhdKSB7CiAgICAgIHNldERpZ2l0KGNhcmRzW2luZGV4XSwgY3VycmVudERpZ2l0c1tpbmRleF0sIGRpZ2l0KTsKICAgIH0KICB9KTsKCiAgY3VycmVudERpZ2l0cyA9IG5ld0RpZ2l0czsKfQoKc2V0SW50ZXJ2YWwoKCkgPT4gewogIHJlbWFpbmluZy0tOwoKICBpZiAocmVtYWluaW5nIDwgMCkgewogICAgcmVtYWluaW5nID0gMTA7CiAgfQoKICB1cGRhdGVDbG9jaygpOwp9LCAxMDAwKTsKCjwvc2NyaXB0PgoKPC9ib2R5Pgo8L2h0bWw+Cg==");
+  const prepared = raw.replace(/<head>/i, '<head><script>' + VCLOCK + '</' + 'script>');
+  const frame = document.getElementById("rf");
+  frame.srcdoc = prepared;
+  await new Promise((res) => { frame.onload = res; });
+  await sleep(300);
+  const win = frame.contentWindow;
+  const W = 1280, H = 720;
+  // replicate the v2.5 export loop up to t=1400ms
+  const animStart = new WeakMap();
+  function syncAnims(tMs) {
+    win.document.getAnimations().forEach((a) => {
+      try {
+        if (!animStart.has(a)) animStart.set(a, tMs);
+        a.currentTime = Math.max(0, tMs - animStart.get(a));
+        a.pause();
+      } catch (e) {}
+    });
+  }
+  for (let tMs = 0; tMs <= 1400; tMs += 33) {
+    win.__vcAdvance(tMs);
+    syncAnims(tMs);
+  }
+  win.__vcAdvance(1400);
+  syncAnims(1400);
+  await sleep(50);
+  const out = [];
+  try {
+    const anims = win.document.getAnimations();
+    out.push("animations count: " + anims.length);
+    anims.forEach((a, i) => {
+      out.push("anim[" + i + "] name=" + a.animationName + " currentTime=" + a.currentTime + " playState=" + a.playState + " target=" + (a.effect && a.effect.target ? a.effect.target.className : "?"));
+    });
+  } catch (e) { out.push("getAnimations error: " + e.message); }
+  out.push("flipper divs in DOM: " + win.document.querySelectorAll(".flipper").length);
+  const ft = win.document.querySelector(".flip-top");
+  const fb = win.document.querySelector(".flip-bottom");
+  if (ft) out.push("flip-top computed transform: " + win.getComputedStyle(ft).transform);
+  if (fb) out.push("flip-bottom computed transform: " + win.getComputedStyle(fb).transform);
+  if (ft) out.push("flip-top computed animation: " + win.getComputedStyle(ft).animation);
+  if (ft) out.push("flip-top inline style after clone-fix would be animation:none — check captured canvas below");
+
+  // clone-style check: replicate captureFrame's style-copy for the flippers
+  try {
+    const cdoc = win.document.cloneNode(true);
+    const oEls = [win.document.documentElement, ...win.document.querySelectorAll("*")];
+    const cEls = [cdoc.documentElement, ...cdoc.querySelectorAll("*")];
+    for (let i = 0; i < cEls.length && i < oEls.length; i++) {
+      try {
+        const cs = win.getComputedStyle(oEls[i]);
+        cEls[i].setAttribute("style", cs.cssText);
+        cEls[i].style.setProperty("animation", "none", "important");
+        cEls[i].style.setProperty("transition", "none", "important");
+      } catch (e) {}
+    }
+    const cft = cdoc.querySelector(".flip-top");
+    const cfb = cdoc.querySelector(".flip-bottom");
+    if (cft) out.push("CLONE flip-top style: " + cft.getAttribute("style"));
+    if (cfb) out.push("CLONE flip-bottom style: " + cfb.getAttribute("style"));
+  } catch (e) { out.push("clone check error: " + e.message); }
+  const tops = win.document.querySelectorAll(".card .top span");
+  const bots = win.document.querySelectorAll(".card .bottom span");
+  out.push("static top spans: " + Array.from(tops).map((s) => s.textContent).join(""));
+  out.push("static bottom spans: " + Array.from(bots).map((s) => s.textContent).join(""));
+  dbg.textContent = out.join("\n");
+  try {
+    const bmp = await captureFrame(win, W, H);
+    const cv = document.getElementById("cv");
+    const ctx = cv.getContext("2d");
+    ctx.drawImage(bmp, 0, 0, 640, 360);
+    dbg.textContent += "\ncaptureFrame: OK, bitmap " + bmp.width + "x" + bmp.height;
+  } catch (e) {
+    dbg.textContent += "\ncaptureFrame FAILED: " + e.message;
+  }
+}
+main();
+</script>
+</body>
+</html>
