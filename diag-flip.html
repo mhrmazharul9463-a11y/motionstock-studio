@@ -47,9 +47,25 @@ async function captureFrame(win, W, H) {
     for (let i = 0; i < cloneEls.length && i < origEls.length; i++) {
       try {
         const cs = win.getComputedStyle(origEls[i]);
-        cloneEls[i].setAttribute("style", cs.cssText);
-        cloneEls[i].style.setProperty("animation", "none", "important");
-        cloneEls[i].style.setProperty("transition", "none", "important");
+        const el = cloneEls[i];
+        el.setAttribute("style", cs.cssText);
+        // Chrome-e getComputedStyle().cssText khali thake — tai animation-e
+        // bodle jawa property (transform, opacity ityadi) alada kore copy
+        // korte hoy; nahole clone-e flip-er majher obostha kokhono ashe na,
+        // sudhu static span dekha jay.
+        const liveProps = ["transform", "opacity", "filter", "translate", "rotate", "scale"];
+        for (const p of liveProps) {
+          try {
+            const v = cs.getPropertyValue(p);
+            if (v && v !== "none" && !(p === "opacity" && v === "1")) el.style.setProperty(p, v, "important");
+          } catch (e) {}
+        }
+        // Clone-ta static snapshot: animation/transition ekhane abar
+        // cholte deya jabe na — nahole SVG image-e animation-ta 0 theke
+        // abar shuru hoye uporer matrix3d transform-ke dhেকে dey, ar
+        // flip-er moto mid-animation frame kokhono dekha jay na.
+        el.style.setProperty("animation", "none", "important");
+        el.style.setProperty("transition", "none", "important");
       } catch (e) {}
     }
   } catch (e) {}
@@ -138,9 +154,17 @@ async function main() {
     for (let i = 0; i < cEls.length && i < oEls.length; i++) {
       try {
         const cs = win.getComputedStyle(oEls[i]);
-        cEls[i].setAttribute("style", cs.cssText);
-        cEls[i].style.setProperty("animation", "none", "important");
-        cEls[i].style.setProperty("transition", "none", "important");
+        const el = cEls[i];
+        el.setAttribute("style", cs.cssText);
+        const liveProps = ["transform", "opacity", "filter", "translate", "rotate", "scale"];
+        for (const p of liveProps) {
+          try {
+            const v = cs.getPropertyValue(p);
+            if (v && v !== "none" && !(p === "opacity" && v === "1")) el.style.setProperty(p, v, "important");
+          } catch (e) {}
+        }
+        el.style.setProperty("animation", "none", "important");
+        el.style.setProperty("transition", "none", "important");
       } catch (e) {}
     }
     const cft = cdoc.querySelector(".flip-top");
