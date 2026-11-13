@@ -1,0 +1,2201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MotionStock Studio — HTML to Video Studio for Microstock</title>
+<meta name="description" content="MotionStock Studio — Turn HTML animations into MP4 and MOV videos. 720p, 1080p and 4K renders for microstock.">
+<!-- Video engine: virtual clock (VCLOCK) + SVG foreignObject frame capture + WebCodecs VideoEncoder + mp4-muxer. Contact: https://wa.me/8801741192705 -->
+<style>
+:root{
+  --bg0:#040b1f; --bg:#071633; --bg2:#0a2148;
+  --card:rgba(13,32,66,.72); --card2:rgba(18,45,92,.85);
+  --blue:#2563eb; --blue2:#3b82f6; --cyan:#22d3ee; --cyan2:#06b6d4;
+  --gold:#e8b93c; --gold2:#f5c542;
+  --grad:linear-gradient(135deg,#2563eb 0%,#0891b2 55%,#22d3ee 100%);
+  --ink:#eaf2ff; --muted:#9db4d8; --line:#1e3a66; --danger:#f87171; --ok:#34d399;
+  --shadow:0 12px 40px rgba(2,8,30,.45);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:radial-gradient(1100px 600px at 85% -10%,#155e75 0%,transparent 55%),radial-gradient(900px 500px at -10% 10%,#1d4ed8 0%,transparent 50%),linear-gradient(180deg,#071633,#040b1f 70%);background-attachment:fixed;min-height:100vh}
+a{color:var(--cyan)}
+header{position:sticky;top:0;z-index:20;background:rgba(6,17,40,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+.topbar{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 0;flex-wrap:wrap}
+.brand{font-size:24px;font-weight:800;letter-spacing:.3px}
+.brand b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand span{color:var(--cyan)}
+nav a{color:var(--ink);text-decoration:none;margin:0 8px;font-weight:600}
+nav a:hover{color:var(--cyan)}
+.ticker{background:var(--grad);color:#fff;font-weight:700;overflow:hidden;white-space:nowrap;padding:6px 0}
+.ticker span{display:inline-block;padding-left:100%;animation:tick 22s linear infinite}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+.notice{background:linear-gradient(90deg,#fde68a,#fbbf24);border:1px solid #d97706;border-radius:10px;padding:12px 16px;margin:14px 0;color:#451a03;font-weight:700;text-align:center}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:16px 0;box-shadow:var(--shadow);animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card h2{margin:0 0 10px;font-size:19px;color:#fff}
+.card h2 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.card h3{margin:14px 0 6px;font-size:16px;color:var(--cyan)}
+label{display:block;font-weight:600;margin:10px 0 4px}
+input,select,textarea{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:#081226;color:var(--ink);font:14px/1.5 system-ui}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--blue2);border-color:var(--blue2)}
+textarea{font-family:ui-monospace,Consolas,monospace}
+button{padding:11px 18px;border:0;border-radius:12px;background:var(--blue2);color:#fff;font-weight:700;cursor:pointer;margin:6px 6px 0 0;transition:transform .15s ease,box-shadow .15s ease,filter .15s ease}
+button:hover{transform:translateY(-1px);filter:brightness(1.08)}
+button:active{transform:translateY(0) scale(.98)}
+button.gold,button.grad{background:var(--grad);color:#fff;box-shadow:0 8px 22px rgba(37,99,235,.45)}
+button.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--ink)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row>*{flex:1;min-width:160px}
+.muted{color:var(--muted);font-size:13px}
+#authMsg.msgErr{background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.55);color:#fca5a5;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:13.5px}
+#authMsg.msgOk{background:rgba(34,197,94,.13);border:1px solid rgba(34,197,94,.5);color:#86efac;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:13.5px}
+.pwWrap{position:relative}
+.pwWrap input{padding-right:42px}
+.pwToggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--muted);cursor:pointer;line-height:1;padding:4px 6px;margin:0;display:flex;align-items:center}
+.pwToggle svg{display:block}
+.pwToggle:hover{transform:translateY(-50%);filter:none;color:var(--ink)}
+.pill{display:inline-block;background:rgba(34,211,238,.14);border:1px solid var(--line);border-radius:999px;padding:3px 10px;margin:2px;font-size:12.5px}
+.pill.pro{background:var(--grad);color:#fff;border-color:transparent;font-weight:700}
+.planGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.plan{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px;transition:transform .15s ease,border-color .15s ease}
+.plan:hover{transform:translateY(-2px);border-color:var(--blue2)}
+.plan.pop{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 10px 26px rgba(34,211,238,.18)}
+.plan .price{font-size:26px;font-weight:800;color:#fff}
+.plan .price small{font-size:14px;color:var(--cyan)}
+.previewWrap{position:relative;width:100%;margin:8px auto;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:#000}
+iframe.preview{position:absolute;left:0;top:0;display:block;border:0;background:#fff}
+#bokehOv{position:absolute;left:0;top:0;pointer-events:none;opacity:0}
+video{width:100%;border-radius:10px;background:#000}
+progress{width:100%;height:12px}
+.hidden{display:none!important}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+td,th{border:1px solid var(--line);padding:6px;text-align:left}
+footer{color:var(--muted);text-align:center;padding:24px 10px 40px;font-size:13px}
+.demo{background:rgba(34,211,238,.12);border:1px solid var(--line);color:#cdeafe;border-radius:10px;padding:10px 14px;margin:14px 0}
+/* hero + auth landing */
+.hero{text-align:center;padding:44px 16px 10px;animation:fadeUp .6s ease both}
+.heroBadge{display:inline-block;padding:6px 14px;border-radius:999px;background:rgba(34,211,238,.14);border:1px solid rgba(34,211,238,.45);color:#a5f3fc;font-weight:700;font-size:13px;letter-spacing:.4px}
+.hero h1{font-size:clamp(28px,5vw,46px);line-height:1.15;margin:16px 0 10px;font-weight:800}
+.hero h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--muted);max-width:640px;margin:0 auto;font-size:16px}
+.heroCtas{margin-top:18px}
+.statRow{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 18px;text-align:center}
+.stat b{display:block;font-size:20px;color:#fff}
+.stat span{font-size:12px;color:var(--muted)}
+.authGrid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;align-items:start}
+@media(max-width:760px){.authGrid{grid-template-columns:1fr}}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tab{flex:1;padding:10px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--ink);font-weight:700;cursor:pointer;text-align:center}
+.tab.active{background:var(--grad);border-color:transparent;color:#fff}
+.featureGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.feature{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.feature .ic{font-size:26px}
+.feature h3{margin:8px 0 4px;color:#fff}
+.faqItem{border:1px solid var(--line);border-radius:12px;margin:8px 0;overflow:hidden}
+.faqItem summary{cursor:pointer;padding:12px 14px;font-weight:700;list-style:none}
+.faqItem summary::-webkit-details-marker{display:none}
+.faqItem div{padding:0 14px 12px;color:var(--muted)}
+input[type=range]{padding:0;accent-color:var(--cyan)}
+.editGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px 16px}
+input[type=color]{padding:2px;height:40px;cursor:pointer}
+.comingSoon{padding:14px;border-radius:12px;background:linear-gradient(135deg,rgba(37,99,235,.18),rgba(34,211,238,.12));border:1px dashed var(--cyan);font-weight:700;color:var(--cyan)}
+.badge95{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:999px;background:var(--grad);color:#fff;font-weight:800;box-shadow:0 8px 22px rgba(37,99,235,.45);animation:glow 2.4s ease-in-out infinite}
+@keyframes glow{0%,100%{box-shadow:0 8px 22px rgba(37,99,235,.45)}50%{box-shadow:0 8px 30px rgba(34,211,238,.65)}}
+</style>
+</head>
+<body>
+<header><div class="wrap topbar">
+  <div class="brand">🎬 <b>MotionStock</b> <span>Studio</span></div>
+  <nav><a href="#studio" id="navStudio">Studio</a><a href="#prompt" id="navPrompt">Prompt</a><a href="#plansLanding" id="navPlans">Plans</a><a href="#pro" id="navPro">Pro</a><a href="#faq" id="navFaq">FAQ</a><a href="#admin" id="navAdmin" class="hidden">Admin</a></nav>
+  <div id="authBox"><button id="btnShowAuth" class="ghost">Log In / Sign Up</button></div>
+</div></header>
+<div class="ticker" id="tickerBar"><span id="tickerText">MotionStock Studio — Turn HTML animations into MP4 videos for microstock. 95% approval rate.</span></div>
+<div class="wrap">
+<div id="demoBanner" class="demo hidden">Demo mode: Firebase is not set up yet, so demo data is saved only in this browser. Set up your own Firebase to enable real accounts and payments.</div>
+<div class="notice" id="noticeBox">Create animation videos for microstock — paste your HTML, choose size / fps / duration / format, and press Render to download the video.</div>
+
+<!-- ============ AUTH VIEW (landing — shown first) ============ -->
+<div id="authView">
+  <section class="hero">
+    <span class="heroBadge">✨ The Premier HTML to Motion Video Generator</span>
+    <h1>Turn HTML Animations into <span class="grad">Studio-Grade 4K Motion Videos</span></h1>
+    <p>Designed for Adobe Stock &amp; Shutterstock creators. Paste your HTML, preview it live, and render smooth MP4 and MOV videos — right in your browser.</p>
+    <div><span class="badge95">✓ 95% APPROVED ON MICROSTOCK</span></div>
+    <p class="muted" style="margin-top:10px">Our videos are made for microstock — 95% of videos created with MotionStock Studio get approved on Adobe Stock and Shutterstock.</p>
+    <div class="heroCtas">
+      <button class="grad" id="btnHeroSignup" style="font-size:17px">🚀 Create Free Account</button>
+      <button class="ghost" id="btnHeroLicense">🔑 I Have a License Key</button>
+    </div>
+    <div class="statRow">
+      <div class="stat"><b>95%</b><span>Microstock approval</span></div>
+      <div class="stat"><b>4K UHD</b><span>3840 × 2160 render</span></div>
+      <div class="stat"><b>60 FPS</b><span>Buttery smooth motion</span></div>
+      <div class="stat"><b>100% Free</b><span>Unlimited renders</span></div>
+    </div>
+  </section>
+
+  <div class="authGrid">
+    <section class="card" id="authCard">
+      <h2>🔐 <span class="grad">Log In / Sign Up</span></h2>
+      <div class="tabs">
+        <div class="tab active" data-tab="signup">Sign Up</div>
+        <div class="tab" data-tab="login">Log In</div>
+        <div class="tab" data-tab="license">License Key</div>
+      </div>
+      <div id="tabSignup">
+        <label>Full Name</label><input id="authName" placeholder="Your name">
+        <label>Email</label><input id="authEmail" type="email" placeholder="you@example.com">
+        <label>Password</label><div class="pwWrap"><input id="authPass" type="password" placeholder="At least 6 characters"><button type="button" class="pwToggle" data-for="authPass" aria-label="Show password"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+        <button id="btnSignup" class="grad">Create Account</button>
+        <div class="muted">Free forever — unlimited renders at every resolution.</div>
+      </div>
+      <div id="tabLogin" class="hidden">
+        <label>Email</label><input id="authEmail2" type="email" placeholder="you@example.com">
+        <label>Password</label><div class="pwWrap"><input id="authPass2" type="password" placeholder="Your password"><button type="button" class="pwToggle" data-for="authPass2" aria-label="Show password"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+        <button id="btnLogin" class="grad">Log In &amp; Open Studio</button>
+        <button id="btnReset" class="ghost">Forgot password?</button>
+      </div>
+      <div id="tabLicense" class="hidden">
+        <label>License Key</label><input id="authKey" placeholder="MSS-1M-XXXXXX-XXXXXX" style="text-transform:uppercase">
+        <button id="btnLicense" class="grad">Activate Pro</button>
+        <div class="muted">Enter the license key you received after purchase. Pro unlocks your Pro badge and expiry date in the Studio.</div>
+      </div>
+      <div class="muted" id="authMsg"></div>
+      <div class="muted">In demo mode the first account is the admin. Passwords stay only in this browser in demo mode.</div>
+    </section>
+    <section class="card">
+      <h2>Why creators choose us</h2>
+      <div class="featureGrid" style="grid-template-columns:1fr">
+        <div class="feature"><div class="ic">🎬</div><h3>HTML to Video</h3><div class="muted">Paste any HTML animation and turn it into a real MP4 or MOV video.</div></div>
+        <div class="feature"><div class="ic">✅</div><h3>95% Approval</h3><div class="muted">Calibrated renders made for Adobe Stock &amp; Shutterstock.</div></div>
+        <div class="feature"><div class="ic">⚡</div><h3>Fast, In-Browser</h3><div class="muted">Hardware-accelerated WebCodecs rendering. No server queue.</div></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>✨ Why Top Microstock Creators Choose <span class="grad">MotionStock Studio</span></h2>
+    <div class="featureGrid">
+      <div class="feature"><div class="ic">🪄</div><h3>HTML to Motion Converter</h3><div class="muted">Turn static HTML and CSS animations into fluid 60 FPS motion loops.</div></div>
+      <div class="feature"><div class="ic">🎥</div><h3>4K UHD Video Generator</h3><div class="muted">Render crisp 3840 × 2160 video with calibrated bitrates that pass stock validation.</div></div>
+      <div class="feature"><div class="ic">⚡</div><h3>Zero-Server In-Browser Engine</h3><div class="muted">Hardware-accelerated WebCodecs rendering directly in your browser. No waiting.</div></div>
+    </div>
+  </section>
+
+  <section class="card" id="plansLanding">
+    <h2>💎 Subscription Plans</h2>
+    <div class="muted">Choose a plan to unlock Pro. Rendering stays free and unlimited for everyone.</div>
+    <div class="planGrid" id="planGridLanding"></div>
+  </section>
+
+<section class="card" id="pro">
+  <h2>⭐ Pro Upgrade (bKash)</h2>
+  <ol>
+    <li>Send money to the number below from the bKash app (<b>Send Money</b>).</li>
+    <li>After payment, copy the <b>TrxID</b>.</li>
+    <li>Submit your bKash number and TrxID in the form below.</li>
+    <li>Once verified, your account becomes Pro. You can also activate Pro instantly with a license key.</li>
+  </ol>
+  <div>bKash number: <b id="bkashNo" style="color:var(--gold2)"></b> &nbsp;|&nbsp; WhatsApp: <b><a id="waLink" href="#" target="_blank" rel="noopener"></a></b></div>
+  <label>Choose a plan</label><select id="payPlan"></select>
+  <div id="payAmount" class="muted"></div>
+  <label>Your bKash number (the one you sent from)</label><input id="paySender" placeholder="01XXXXXXXXX">
+  <label>TrxID</label><input id="payTrx" placeholder="e.g. 9HX7...">
+  <button id="btnPay" class="gold">Submit</button>
+  <div class="muted" id="payMsg"></div>
+  <h3>Your requests</h3>
+  <div id="myPays" class="muted">—</div>
+</section>
+
+  <section class="card" id="faq">
+    <h2>❓ Frequently Asked Questions</h2>
+    <details class="faqItem"><summary>Will my videos get approved on microstock sites?</summary><div>Our exports are calibrated for Adobe Stock and Shutterstock — 95% of videos made with MotionStock Studio are approved.</div></details>
+    <details class="faqItem"><summary>How do I activate Pro with a license key?</summary><div>Choose the License Key tab above, paste your key, and press Activate Pro. Your Pro badge and expiry date will appear in the Studio.</div></details>
+    <details class="faqItem"><summary>Is rendering really free?</summary><div>Yes. Rendering is free and unlimited at every resolution — 720p, 1080p and 4K. Pro is a status badge with an expiry date.</div></details>
+    <details class="faqItem"><summary>Does the preview match the rendered video?</summary><div>Yes. The preview uses the exact same layout as the render, so what you see is what you get — including speed and zoom settings.</div></details>
+  </section>
+</div>
+
+<!-- ============ APP VIEW (studio — after login) ============ -->
+<div id="appView" class="hidden">
+
+<section class="card" id="studio">
+  <h2>🎥 HTML to Video Studio <span class="pill" id="planPill">Free</span> <span class="pill" id="usePill"></span> <button id="btnUpgrade" class="ghost" style="font-size:13px;padding:4px 10px">⭐ Upgrade to Pro</button></h2>
+  <div class="muted">Ready. Keep the screen on and stay on this tab during render. (Use Chrome) • v6.0</div>
+  <div id="timer" style="font-size:26px;font-weight:800;color:var(--cyan)">0.0s</div>
+  <h3>✨ Generate with AI</h3>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <input id="aiPrompt" placeholder="Describe your animation — e.g. night sky with comets" style="flex:1;min-width:220px">
+    <button id="btnAiGen" class="gold">✨ Generate</button>
+  </div>
+  <div id="aiStatus" class="muted">Type an idea above and press Generate — the AI writes the HTML for you.</div>
+  <h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Live Preview</h3>
+  <div class="previewWrap" id="previewWrap"><iframe id="preview" class="preview" sandbox="allow-scripts allow-same-origin" title="preview"></iframe><div id="bokehOv"></div></div>
+  <label>HTML Code (paste your own)</label>
+  <textarea id="src" rows="12" placeholder="&lt;!DOCTYPE html&gt; ... paste your animation HTML here"></textarea>
+  <div>
+    <button id="btnSample" class="gold">📄 Load Sample</button>
+    <button id="btnClear" class="ghost">Clear</button>
+    <label style="display:inline-block"><input type="file" id="filePick" accept=".html,.txt,text/html,text/plain" style="display:none"><button id="btnFile" type="button">📁 Open File</button></label>
+  </div>
+  <div class="row">
+    <div><label>Size / Resolution</label><select id="size">
+      <option value="1280x720" selected>1280 × 720 (HD)</option>
+      <option value="1920x1080">1920 × 1080 (Full HD)</option>
+      <option value="1440x2560">1440 × 2560 (Vertical)</option>
+      <option value="3840x2160">3840 × 2160 (4K UHD)</option>
+    </select></div>
+    <div><label>Frame rate (fps)</label><select id="fps"><option>24</option><option>25</option><option selected>30</option><option>60</option></select></div>
+    <div><label>Duration (seconds)</label><input id="dur" type="number" min="1" max="60" value="10"></div>
+    <div><label>Quality</label><select id="quality"><option value="0.10">0.10 — Small file</option><option value="0.16">0.16 — Good</option><option value="0.25" selected>0.25 — Best</option><option value="0.35">0.35 — Maximum (smooth gradients)</option></select></div>
+    <div><label>Format</label><select id="fmt"><option value="mp4" selected>MP4</option><option value="mov">MOV</option></select></div>
+  </div>
+  <h3>✏️ Edit Before Render <button id="btnToggleEdit" class="ghost" style="font-size:13px;padding:4px 10px;margin-left:6px" title="Hide / show the edit options">Hide ▾</button></h3>
+  <div id="editBody">
+  <div class="editGrid">
+    <div><label>Speed: <span id="speedVal">1.0×</span></label><input id="speed" type="range" min="0.25" max="2" step="0.25" value="1"></div>
+    <div><label>Subject Zoom: <span id="zoomVal">100%</span></label><input id="zoom" type="range" min="0.5" max="3" step="0.05" value="1"></div>
+    <div><label>Position X: <span id="posXVal">0%</span></label><input id="posX" type="range" min="-50" max="50" step="1" value="0"></div>
+    <div><label>Position Y: <span id="posYVal">0%</span></label><input id="posY" type="range" min="-50" max="50" step="1" value="0"></div>
+    <div><label>Blur: <span id="blurVal">0px</span></label><input id="blur" type="range" min="0" max="20" step="1" value="0"></div>
+    <div><label>Bokeh: <span id="bokehVal">0%</span></label><input id="bokeh" type="range" min="0" max="100" step="5" value="0"></div>
+    <div><label><input type="checkbox" id="seamless" style="width:auto"> Seamless Loop — first frame = last frame, so the video loops without a visible cut</label></div>
+  </div>
+  <div class="muted">The preview shows your edits live — what you see is exactly what the render will look like.</div>
+  </div>
+  <div>
+    <button id="btnGo" class="gold" style="font-size:17px">▶ Render MP4</button>
+    <button id="btnShare">🔗 Share</button>
+    <label style="display:inline-block;margin-left:8px"><input type="checkbox" id="autoDl" checked style="width:auto"> Auto-download when render finishes</label>
+  </div>
+  <progress id="prog" value="0" max="100" class="hidden"></progress>
+  <div id="status" class="muted">Ready.</div>
+  <h3>🎞️ Rendered Video</h3>
+  <video id="vid" controls playsinline></video>
+  <button id="btnDl" class="gold hidden" style="font-size:17px;margin-top:8px">⬇ Download MP4</button>
+  <div id="dlInfo" class="muted hidden"></div>
+  <a id="dl" class="hidden" download>download</a>
+</section>
+
+<section class="card" id="prompt">
+  <h2>🤖 AI Prompt Template</h2>
+  <div class="muted">Copy it and give it to any AI. Write your idea in the THEME part.</div>
+  <textarea id="promptTpl" rows="6" readonly></textarea>
+  <button id="btnCopyPrompt" class="gold">📋 Copy Prompt</button>
+  <h3>🧰 More Tools</h3>
+  <div id="toolsBox" class="muted">Our other useful tools. See details or open them directly.</div>
+</section>
+
+
+
+
+
+
+
+
+<section class="card hidden" id="admin">
+  <h2>🛠️ Admin Panel</h2>
+  <h3>Payment requests (Pending)</h3>
+  <div id="adminPays" class="muted">—</div>
+  <h3>All Users (Firebase)</h3>
+  <div class="muted">See everyone who signed up. Works when Firebase is configured.</div>
+  <button id="btnLoadUsers" class="gold">Load Users</button>
+  <div id="adminUsers" class="muted">—</div>
+  <h3>Site Settings</h3>
+  <label>Site name (brand)</label><input id="setBrand">
+  <label>WhatsApp number</label><input id="setWa">
+  <label>bKash number</label><input id="setBkash">
+  <label>Free trial videos above 720p (incl. 4K) — 1080p free limit</label><input id="setFree1080" type="number" min="0">
+  <label>🔔 Top scrolling text (moves left to right; leave empty to hide)</label><input id="setTicker">
+  <label>Announcement / notice (hidden when empty)</label><input id="setNotice">
+  <label>"How to write a prompt" text (everyone sees it)</label><textarea id="setGuide" rows="3"></textarea>
+  <label>AI prompt template (users copy it)</label><textarea id="setPromptTpl" rows="5"></textarea>
+  <label>Default code — everyone sees this in the editor when they open the studio (leave empty to use the built-in sample)</label><textarea id="setDefaultCode" rows="8" spellcheck="false"></textarea>
+  <button id="btnSaveSettings" class="gold">Save Settings</button>
+  <div class="muted" id="setMsg"></div>
+</section>
+</div>
+</div>
+<footer>MotionStock Studio — Turn HTML animations into MP4 videos for microstock. Works best in Chrome.<br>WhatsApp / bKash: <a href="https://wa.me/8801741192705">01741192705</a><br>Developed by Mhr Mazharul Islam</footer>
+<iframe id="renderFrame" sandbox="allow-scripts allow-same-origin" style="position:fixed;left:-9999px;top:0;width:10px;height:10px;opacity:0.01" title="render"></iframe>
+<script>'use strict';const al=b;(function(c,d){const ak=b,e=c();while(!![]){try{const f=parseInt(ak(0x39b))/0x1+-parseInt(ak(0x2c5))/0x2*(parseInt(ak(0xcd))/0x3)+-parseInt(ak(0x33f))/0x4+-parseInt(ak(0x19b))/0x5*(parseInt(ak(0x32c))/0x6)+-parseInt(ak(0x219))/0x7+-parseInt(ak(0x196))/0x8*(parseInt(ak(0x210))/0x9)+parseInt(ak(0x1ef))/0xa*(parseInt(ak(0x161))/0xb);if(f===d)break;else e['push'](e['shift']());}catch(g){e['push'](e['shift']());}}}(a,0x34ef6));const CONFIG={'FIREBASE':{'apiKey':al(0x1da),'authDomain':al(0x259),'projectId':al(0x37d),'storageBucket':al(0x188),'messagingSenderId':al(0x285),'appId':al(0x360)},'ADMIN_EMAILS':[al(0x38d)],'AI_WORKER_URL':''},DEFAULTS={'brand':al(0xdd),'whatsapp':al(0x15e),'bkash':al(0x15e),'price':0xc7,'proDays':0x1e,'free1080Limit':0x14,'ticker':al(0x1fb),'notice':al(0x2fd),'guide':al(0x32e),'promptTemplate':al(0x37f),'defaultCode':'','plans':[{'name':al(0x126),'price':0xc7,'days':0x1e},{'name':al(0x2e1),'price':0x1f3,'days':0x5a},{'name':al(0x34e),'price':0x3e7,'days':0xb4},{'name':al(0x29c),'price':0x5db,'days':0x16d}],'tools':[{'name':al(0x1a2),'desc':al(0x266),'url':'#'},{'name':al(0x289),'desc':al(0x1bf),'url':al(0x15f)}]},LIC_SECRET=al(0x22d);function licHash(c){const am=al;let d=0xdeadbeef,e=0x41c6ce57;for(let f=0x0;f<c[am(0x35d)];f++){const g=c[am(0x16f)](f);d=Math[am(0x305)](d^g,0x9e3779b1),e=Math[am(0x305)](e^g,0x5f356495);}return d=Math[am(0x305)](d^d>>>0x10,0x85ebca6b)^Math[am(0x305)](e^e>>>0xd,0xc2b2ae35),e=Math[am(0x305)](e^e>>>0x10,0x85ebca6b)^Math[am(0x305)](d^d>>>0xd,0xc2b2ae35),(e>>>0x0)[am(0x377)](0x10)[am(0x29a)](0x8,'0')+(d>>>0x0)[am(0x377)](0x10)[am(0x29a)](0x8,'0');}function licVerify(c){const an=al;if(!c)return null;const d=String(c)[an(0x2ce)]()[an(0x38a)]()[an(0xd5)](/[^A-Z0-9-]/g,'')[an(0x1d3)]('-');if(d[an(0x35d)]!==0x5||d[0x0]!==an(0xe5))return null;const e=Number(d[0x1][an(0xd5)]('M',''));if(e!==0x1&&e!==0x2&&e!==0xc)return null;const f=parseInt(d[0x2],0x24)*0x3e8;if(!f||f<=Date[an(0x26f)]())return null;const g=licHash(LIC_SECRET+'|'+d[0x1]+'|'+d[0x2]+'|'+d[0x3])[an(0x276)](0x0,0x6)[an(0x38a)]();if(g!==d[0x4])return null;return{'months':e,'proUntil':f};}const $=c=>document[al(0x2ca)](c),store={'get'(c,f){const ao=al;try{const g=localStorage[ao(0xdb)](c);return g?JSON[ao(0x2aa)](g):f;}catch(h){return f;}},'set'(c,d){const ap=al;try{localStorage[ap(0x302)](c,JSON[ap(0x1a1)](d));}catch(f){}}};let SETTINGS=Object[al(0x144)]({},DEFAULTS,store[al(0xf8)](al(0x186),{}));SETTINGS[al(0x370)]=SETTINGS[al(0x370)]&&SETTINGS[al(0x370)][al(0x35d)]?SETTINGS[al(0x370)]:DEFAULTS[al(0x370)][al(0x276)](),SETTINGS[al(0x13f)]=SETTINGS[al(0x13f)]&&SETTINGS[al(0x13f)][al(0x35d)]?SETTINGS[al(0x13f)]:DEFAULTS[al(0x13f)][al(0x276)]();function saveSettingsLocal(){const aq=al;store[aq(0x25e)](aq(0x186),SETTINGS);}function firebaseConfigured(){const ar=al,c=CONFIG[ar(0x2f7)]||{};return!!(c[ar(0x14c)]&&c[ar(0x14c)][ar(0x368)](ar(0x13e))===-0x1&&c[ar(0x2dd)]&&c[ar(0x2dd)][ar(0x368)](ar(0x13e))===-0x1);}let FB=null;async function tryInitFirebase(){const as=al;if(!firebaseConfigured())return![];try{const c=await import(as(0x1c2)),d=await import(as(0x192)),f=await import(as(0xfb)),g=c[as(0x148)](CONFIG[as(0x2f7)]);return FB={'auth':d[as(0x30a)](g),'db':f[as(0x1d4)](g),'authMod':d,'fsMod':f},!![];}catch(h){return console[as(0x1ac)](as(0x263),h),![];}}const Demo={'accounts':()=>store[al(0xf8)](al(0x2ed),[]),'saveAccounts'(c){const at=al;store[at(0x25e)](at(0x2ed),c);},'users':()=>store[al(0xf8)](al(0x2f5),{}),'saveUsers'(c){const au=al;store[au(0x25e)](au(0x2f5),c);},'pays':()=>store[al(0xf8)](al(0x2b8),[]),'savePays'(c){const av=al;store[av(0x25e)](av(0x2b8),c);},'session':()=>store[al(0xf8)](al(0x221),null),'setSession'(c){const aw=al;store[aw(0x25e)](aw(0x221),c);}};let currentUser=null;function userDoc(c){const ax=al,d=Demo[ax(0x364)]();return d[c]||null;}function saveUserDoc(c,d){const ay=al,e=Demo[ay(0x364)]();e[c]=d,Demo[ay(0x2c1)](e);if(fbReady())fbSaveUserDoc(c,d);}function fbReady(){const az=al;return!!(FB&&FB['db']&&FB[az(0x26e)]);}async function fbSaveUserDoc(c,d){const aA=al;if(!fbReady())return;try{await FB[aA(0x26e)][aA(0x265)](FB[aA(0x26e)][aA(0x3a3)](FB['db'],aA(0x364),c),d,{'merge':!![]});}catch(f){console[aA(0x1ac)](aA(0x20c),f);}}async function fbGetUserDoc(c){const aB=al;if(!fbReady())return null;try{const d=await FB[aB(0x26e)][aB(0x11e)](FB[aB(0x26e)][aB(0x3a3)](FB['db'],aB(0x364),c));return d[aB(0x3a0)]()?d[aB(0x37a)]():null;}catch(f){return console[aB(0x1ac)](aB(0x230),f),null;}}async function fbLoadSiteSettings(){const aC=al;if(!fbReady())return![];try{const c=await FB[aC(0x26e)][aC(0x11e)](FB[aC(0x26e)][aC(0x3a3)](FB['db'],aC(0x218),aC(0x2a2)));if(!c[aC(0x3a0)]())return![];const d=c[aC(0x37a)]()||{};let f=![];return typeof d[aC(0x170)]===aC(0x283)&&d[aC(0x170)]!==SETTINGS[aC(0x170)]&&(SETTINGS[aC(0x170)]=d[aC(0x170)],f=!![]),typeof d[aC(0x10c)]===aC(0x283)&&d[aC(0x10c)]!==SETTINGS[aC(0x10c)]&&(SETTINGS[aC(0x10c)]=d[aC(0x10c)],f=!![]),typeof d[aC(0x33b)]===aC(0x283)&&d[aC(0x33b)]!==SETTINGS[aC(0x33b)]&&(SETTINGS[aC(0x33b)]=d[aC(0x33b)],f=!![]),f&&(saveSettingsLocal(),renderAll()),f;}catch(g){return console[aC(0x1ac)](aC(0x1b5),g),![];}}async function fbSaveSiteSettings(){const aD=al;if(!fbReady())return![];try{return await FB[aD(0x26e)][aD(0x265)](FB[aD(0x26e)][aD(0x3a3)](FB['db'],aD(0x218),aD(0x2a2)),{'notice':SETTINGS[aD(0x170)]||'','ticker':SETTINGS[aD(0x10c)]||'','defaultCode':SETTINGS[aD(0x33b)]||'','updatedAt':Date[aD(0x26f)]()},{'merge':!![]}),!![];}catch(c){return console[aD(0x1ac)](aD(0x1df),c),![];}}async function fbSavePayment(c){const aE=al;if(!fbReady())return![];try{return await FB[aE(0x26e)][aE(0x265)](FB[aE(0x26e)][aE(0x3a3)](FB['db'],aE(0x12e),c[aE(0xd4)]),c,{'merge':!![]}),!![];}catch(d){return console[aE(0x1ac)](aE(0x138),d),![];}}async function fbGetPayment(c){const aF=al;if(!fbReady())return null;try{const d=await FB[aF(0x26e)][aF(0x11e)](FB[aF(0x26e)][aF(0x3a3)](FB['db'],aF(0x12e),c));return d[aF(0x3a0)]()?Object[aF(0x144)]({'trxid':d['id']},d[aF(0x37a)]()):null;}catch(f){return console[aF(0x1ac)](aF(0x2dc),f),null;}}async function fbGetPaymentsForAdmin(){const aG=al;if(!fbReady())return null;try{const c=await FB[aG(0x26e)][aG(0x21f)](FB[aG(0x26e)][aG(0x15b)](FB['db'],aG(0x12e))),d=[];return c[aG(0x13c)](f=>{const aH=aG,g=f[aH(0x37a)]()||{};d[aH(0x182)](Object[aH(0x144)]({'trxid':f['id']},g));}),d;}catch(f){return console[aG(0x1ac)](aG(0x2ad),f),null;}}async function fbGetMyPayments(c){const aI=al;if(!fbReady())return null;try{const d=FB[aI(0x26e)][aI(0x1f1)](FB[aI(0x26e)][aI(0x15b)](FB['db'],aI(0x12e)),FB[aI(0x26e)][aI(0x28f)](aI(0x30b),'==',c)),f=await FB[aI(0x26e)][aI(0x21f)](d),g=[];return f[aI(0x13c)](h=>{const aJ=aI,i=h[aJ(0x37a)]()||{};g[aJ(0x182)](Object[aJ(0x144)]({'trxid':h['id']},i));}),g;}catch(h){return console[aI(0x1ac)](aI(0x338),h),null;}}function mergePays(c,d){const aK=al,e=new Map();return(c||[])[aK(0x13c)](f=>{const aL=aK;if(f&&f[aL(0xd4)])e[aL(0x25e)](f[aL(0xd4)],f);}),(d||[])[aK(0x13c)](f=>{const aM=aK;if(f&&f[aM(0xd4)])e[aM(0x25e)](f[aM(0xd4)],f);}),Array[aK(0x175)](e[aK(0x187)]());}function isAdminUser(c){const aN=al;if(!c)return![];if(c[aN(0x162)])return!![];if(FB&&CONFIG[aN(0x383)][aN(0x356)](c[aN(0x262)]))return!![];return![];}async function refreshAuthUI(){const aO=al,c=$(aO(0x171));if(currentUser){c[aO(0x206)]='';const e=document[aO(0xc0)](aO(0x340));e[aO(0x308)]=aO(0x256)+(isProUser(currentUser)?aO(0x327):''),e[aO(0x35c)]=(currentUser[aO(0x311)]||currentUser[aO(0x262)]||aO(0x2d5))+aO(0x316)+(isProUser(currentUser)?aO(0x2e7):aO(0x240));const f=document[aO(0xc0)](aO(0x320));f[aO(0x308)]=aO(0x2d8),f[aO(0x35c)]=aO(0x1e2),f[aO(0x1e5)]=()=>{const aP=aO;if(FB&&FB[aP(0xfe)])try{FB[aP(0x35a)][aP(0x104)](FB[aP(0xfe)]);}catch(g){}Demo[aP(0x1f3)](null),currentUser=null,refreshAuthUI(),renderAll(),showView(aP(0xfe));},c[aO(0x174)](e),c[aO(0x174)](f),$(aO(0x1d8))[aO(0x39e)][aO(0xfd)](aO(0x234),!isAdminUser(currentUser)),$(aO(0x352))[aO(0x39e)][aO(0xfd)](aO(0x234),!isAdminUser(currentUser));}else c[aO(0x206)]=aO(0xc9),$(aO(0x16d))[aO(0x1e5)]=()=>goToAuth(aO(0x28d)),$(aO(0x1d8))[aO(0x39e)][aO(0x2d0)](aO(0x234)),$(aO(0x352))[aO(0x39e)][aO(0x2d0)](aO(0x234));const d=$(aO(0x29e));if(currentUser){const g=isProUser(currentUser);d[aO(0x35c)]=g?aO(0x2e7)+(currentUser[aO(0x329)]?aO(0x333)+new Date(currentUser[aO(0x329)])[aO(0xf1)](aO(0x225)):''):aO(0x240),$(aO(0x288))[aO(0x35c)]=aO(0x1a9);}else d[aO(0x35c)]=aO(0x240),$(aO(0x288))[aO(0x35c)]='';$(aO(0x1d1))[aO(0x39e)][aO(0xfd)](aO(0x234),!!(currentUser&&isProUser(currentUser)));}function showView(c){const aQ=al,d=c===aQ(0xfe);$(aQ(0x1b2))[aQ(0x39e)][aQ(0xfd)](aQ(0x234),!d),$(aQ(0x158))[aQ(0x39e)][aQ(0xfd)](aQ(0x234),d),$(aQ(0x101))[aQ(0x39e)][aQ(0xfd)](aQ(0x234),!currentUser),$(aQ(0x1e4))[aQ(0x39e)][aQ(0xfd)](aQ(0x234),d),$(aQ(0x36b))[aQ(0x39e)][aQ(0xfd)](aQ(0x234),!d),$(aQ(0x269))[aQ(0x39e)][aQ(0xfd)](aQ(0x234),!d),$(aQ(0x198))[aQ(0x39e)][aQ(0xfd)](aQ(0x234),!d),!d?(fitPreview(),startPreviewDriver()):stopPreviewDriver(),window[aQ(0x384)]({'top':0x0,'behavior':aQ(0x1b8)});}function selectAuthTab(c){const aR=al;document[aR(0x3a2)](aR(0x2d4))[aR(0x13c)](d=>d[aR(0x39e)][aR(0xfd)](aR(0x14d),d[aR(0xd0)][aR(0x108)]===c)),$(aR(0xfc))[aR(0x39e)][aR(0xfd)](aR(0x234),c!==aR(0x28d)),$(aR(0x38c))[aR(0x39e)][aR(0xfd)](aR(0x234),c!==aR(0x39d)),$(aR(0x1f6))[aR(0x39e)][aR(0xfd)](aR(0x234),c!==aR(0xd2));}function goToAuth(c){const aS=al;showView(aS(0xfe)),selectAuthTab(c||aS(0x28d)),setTimeout(()=>{const aT=aS,d=$(aT(0x2ea));if(d)d[aT(0x1aa)]({'behavior':aT(0x1b8)});},0x32);}function ensureAdminPro(c,d){const aU=al;return d&&d[aU(0x162)]&&!(d[aU(0x30d)]===aU(0x2b0)&&d[aU(0x329)]&&Date[aU(0x26f)]()<d[aU(0x329)])&&(d[aU(0x30d)]=aU(0x2b0),d[aU(0x329)]=Date[aU(0x26f)]()+0xe42*0x18*0xe10*0x3e8,saveUserDoc(c,d)),d;}function loadSession(){const aV=al,c=Demo[aV(0x112)]();if(c&&c[aV(0x30b)]){const d=userDoc(c[aV(0x30b)]);d&&(ensureAdminPro(c[aV(0x30b)],d),currentUser=Object[aV(0x144)]({'uid':c[aV(0x30b)]},d));}}function setAuthMsg(c,d){const aW=al,e=$(aW(0x1f9));e[aW(0x35c)]=c||'',e[aW(0x308)]=d===aW(0x376)?aW(0x18c):d==='ok'?aW(0xeb):aW(0x2e2);}async function doSignup(){const aX=al,c=$(aX(0x239))[aX(0x1ad)][aX(0x2ce)](),d=$(aX(0x1ce))[aX(0x1ad)][aX(0x2ce)]()[aX(0x1f0)](),f=$(aX(0x1cd))[aX(0x1ad)];if(!d||f[aX(0x35d)]<0x6){setAuthMsg(aX(0xbf),aX(0x376));return;}if(FB&&FB[aX(0xfe)])try{const j=await FB[aX(0x35a)][aX(0x3a8)](FB[aX(0xfe)],d,f),k=j[aX(0x23a)][aX(0x30b)];saveUserDoc(k,{'email':d,'name':c||d[aX(0x1d3)]('@')[0x0],'plan':aX(0x312),'proUntil':0x0,'used1080':0x0,'isAdmin':![],'createdAt':Date[aX(0x26f)]()}),Demo[aX(0x1f3)]({'uid':k}),loadSession(),setAuthMsg(aX(0xd6),'ok'),refreshAuthUI(),renderAll(),showView(aX(0x18e));return;}catch(l){const m=l&&l[aX(0x1cc)]||'';if(m===aX(0x106)){setAuthMsg(aX(0x2f3),aX(0x376));return;}console[aX(0x1ac)](aX(0x38e),l);}const g=Demo[aX(0xf0)]();if(g[aX(0x1ee)](n=>n[aX(0x262)]===d)){setAuthMsg(aX(0x2f3),aX(0x376));return;}const h='u_'+Math[aX(0xc3)]()[aX(0x377)](0x24)[aX(0x276)](0x2,0xa)+Date[aX(0x26f)]()[aX(0x377)](0x24),i=g[aX(0x35d)]===0x0;g[aX(0x182)]({'uid':h,'email':d,'name':c||d[aX(0x1d3)]('@')[0x0],'pass':f}),Demo[aX(0x31f)](g),saveUserDoc(h,{'email':d,'name':c||d[aX(0x1d3)]('@')[0x0],'plan':i?aX(0x2b0):aX(0x312),'proUntil':i?Date[aX(0x26f)]()+0xe42*0x18*0xe10*0x3e8:0x0,'used1080':0x0,'isAdmin':i,'createdAt':Date[aX(0x26f)]()}),Demo[aX(0x1f3)]({'uid':h}),loadSession(),setAuthMsg(i?aX(0x122):aX(0xd6),'ok'),refreshAuthUI(),renderAll(),showView(aX(0x18e));}async function doLogin(){const aY=al,c=($(aY(0x24b))?$(aY(0x24b))[aY(0x1ad)]:$(aY(0x1ce))[aY(0x1ad)])[aY(0x2ce)]()[aY(0x1f0)](),d=$(aY(0x128))?$(aY(0x128))[aY(0x1ad)]:$(aY(0x1cd))[aY(0x1ad)];if(FB&&FB[aY(0xfe)])try{const g=await FB[aY(0x35a)][aY(0x1cf)](FB[aY(0xfe)],c,d),h=g[aY(0x23a)][aY(0x30b)];let i=await fbGetUserDoc(h);!i&&(i={'email':c,'name':c[aY(0x1d3)]('@')[0x0],'plan':aY(0x312),'proUntil':0x0,'used1080':0x0,'isAdmin':![],'createdAt':Date[aY(0x26f)]()},fbSaveUserDoc(h,i));const j=Demo[aY(0x364)]();j[h]=i,Demo[aY(0x2c1)](j),Demo[aY(0x1f3)]({'uid':h}),loadSession(),setAuthMsg(aY(0x173),'ok'),refreshAuthUI(),renderAll(),showView(aY(0x18e));return;}catch(k){console[aY(0x1ac)](aY(0x21b),k);}const f=Demo[aY(0xf0)]()[aY(0x394)](l=>l[aY(0x262)]===c&&l[aY(0x31c)]===d);if(!f){setAuthMsg(aY(0x1a0),aY(0x376));return;}Demo[aY(0x1f3)]({'uid':f[aY(0x30b)]}),loadSession(),setAuthMsg(aY(0x173),'ok'),refreshAuthUI(),renderAll(),showView(aY(0x18e));}async function doLicense(){const aZ=al,c=($(aZ(0xfa))[aZ(0x1ad)]||'')[aZ(0x2ce)]()[aZ(0x38a)](),d=licVerify(c);if(!d){setAuthMsg(aZ(0x160),aZ(0x376));return;}const e=aZ(0x354)+licHash(c)[aZ(0x276)](0x0,0xa);saveUserDoc(e,{'email':'','name':aZ(0x2d5),'plan':aZ(0x2b0),'proUntil':d[aZ(0x329)],'used1080':0x0,'isAdmin':![],'createdAt':Date[aZ(0x26f)](),'licenseKey':c}),store[aZ(0x25e)](aZ(0x345),{'key':c,'proUntil':d[aZ(0x329)],'months':d[aZ(0x268)]}),Demo[aZ(0x1f3)]({'uid':e}),loadSession(),setAuthMsg(aZ(0xff)+new Date(d[aZ(0x329)])[aZ(0xf1)](aZ(0x225))+'\x20('+d[aZ(0x268)]+aZ(0x31d)+(d[aZ(0x268)]>0x1?'s':'')+').','ok'),refreshAuthUI(),renderAll(),showView(aZ(0x18e));}async function doForgotPassword(){const b0=al,c=($(b0(0x24b))?$(b0(0x24b))[b0(0x1ad)]:$(b0(0x1ce))[b0(0x1ad)])[b0(0x2ce)]()[b0(0x1f0)]();if(!c){setAuthMsg(b0(0x257),b0(0x376));return;}if(FB&&FB[b0(0xfe)]){try{await FB[b0(0x35a)][b0(0x325)](FB[b0(0xfe)],c),setAuthMsg(b0(0x233)+c+b0(0x1d0),'ok');}catch(h){const i=h&&h[b0(0x1cc)]||'';if(i===b0(0xe7))setAuthMsg(b0(0xdc),b0(0x376));else{if(i===b0(0x142))setAuthMsg(b0(0x109),b0(0x376));else setAuthMsg(b0(0x1ab),b0(0x376));}}return;}const d=Demo[b0(0xf0)](),f=d[b0(0x394)](j=>j[b0(0x262)]===c);if(!f){setAuthMsg(b0(0xdc),b0(0x376));return;}const g=$(b0(0x128))?$(b0(0x128))[b0(0x1ad)]:'';if(g[b0(0x35d)]<0x6){setAuthMsg(b0(0x1c0),b0(0x376));return;}f[b0(0x31c)]=g,Demo[b0(0x31f)](d),setAuthMsg(b0(0xf5),'ok');}function waNumber(c){const b1=al,e=String(c||'')[b1(0xd5)](/\D/g,'');return e[b1(0x363)](b1(0x1c6))?e:e[b1(0x363)]('0')?b1(0x1c6)+e[b1(0x276)](0x1):e;}function renderAll(){const b2=al;document[b2(0x245)]=SETTINGS[b2(0x2ab)]+b2(0x31e),document[b2(0x358)](b2(0x11b))[b2(0x206)]=b2(0x2b6)+escapeHtml(SETTINGS[b2(0x2ab)][b2(0x1d3)]('\x20')[0x0])+b2(0x396)+escapeHtml(SETTINGS[b2(0x2ab)][b2(0x1d3)]('\x20')[b2(0x276)](0x1)[b2(0x1fd)]('\x20')||b2(0x33c))+b2(0x1ff),$(b2(0x227))[b2(0x35c)]=SETTINGS[b2(0x10c)]||'',$(b2(0x27b))[b2(0x28e)][b2(0x30c)]=SETTINGS[b2(0x10c)]?'':b2(0x304),$(b2(0x21a))[b2(0x35c)]=SETTINGS[b2(0x170)]||'',$(b2(0x21a))[b2(0x28e)][b2(0x30c)]=SETTINGS[b2(0x170)]?'':b2(0x304),$(b2(0x2a6))[b2(0x35c)]=SETTINGS[b2(0x2de)]||'';const c=$(b2(0x2d3));c[b2(0x35c)]=b2(0x156)+(SETTINGS[b2(0x110)]||''),c[b2(0x12f)]=b2(0x163)+waNumber(SETTINGS[b2(0x110)])+b2(0x14a)+encodeURIComponent(b2(0x10e)+SETTINGS[b2(0x2ab)]+'.'),$(b2(0x397))[b2(0x1ad)]=SETTINGS[b2(0x382)]||'',[b2(0x123)][b2(0x13c)](f=>{const b3=b2,g=$(f);if(!g)return;g[b3(0x206)]='',(SETTINGS[b3(0x370)]||[])[b3(0x13c)]((h,j)=>{const b4=b3,k=document[b4(0xc0)](b4(0x223));k[b4(0x308)]=b4(0x30d)+(j===0x1?b4(0x139):''),k[b4(0x206)]=b4(0x118)+escapeHtml(h[b4(0x311)])+b4(0x229)+Number(h[b4(0x212)])+b4(0x1d9)+Number(h[b4(0x18f)])+b4(0x14f),g[b4(0x174)](k);});});const d=$(b2(0xc4));d[b2(0x206)]='',(SETTINGS[b2(0x370)]||[])[b2(0x13c)]((f,g)=>{const b5=b2,h=document[b5(0xc0)](b5(0x297));h[b5(0x1ad)]=g,h[b5(0x35c)]=f[b5(0x311)]+b5(0x2e5)+f[b5(0x212)]+b5(0x116)+f[b5(0x18f)]+b5(0x399),d[b5(0x174)](h);}),updatePayAmount();const e=$(b2(0x2a5));e[b2(0x206)]='',(SETTINGS[b2(0x13f)]||[])[b2(0x13c)](f=>{const b6=b2,g=document[b6(0xc0)](b6(0x223));g[b6(0x28e)][b6(0x203)]=b6(0x242),g[b6(0x206)]=b6(0x247)+escapeHtml(f[b6(0x311)])+b6(0x185)+escapeHtml(f[b6(0x168)])+'\x20';const h=document[b6(0xc0)]('a');h[b6(0x12f)]=f[b6(0x2cb)]||'#',h[b6(0x35c)]=b6(0x339),g[b6(0x174)](h),e[b6(0x174)](g);}),renderMyPays(),renderAdmin();}function updatePayAmount(){const b7=al,c=(SETTINGS[b7(0x370)]||[])[Number($(b7(0xc4))[b7(0x1ad)]||0x0)];$(b7(0x323))[b7(0x35c)]=c?b7(0xf7)+c[b7(0x212)]+b7(0x116)+c[b7(0x18f)]+b7(0x399):'';}function escapeHtml(c){const b8=al;return String(c==null?'':c)[b8(0xd5)](/[&<>"']/g,d=>({'&':b8(0x292),'<':b8(0x39a),'>':b8(0x261),'\x22':b8(0x194),'\x27':b8(0xef)}[d]));}function renderMyPaysBox(c){const b9=al,d=$(b9(0x3a4));if(!d)return;if(!currentUser){d[b9(0x35c)]=b9(0x351);return;}const e=(c||[])[b9(0x2c2)](f=>f[b9(0x30b)]===currentUser[b9(0x30b)]);if(!e[b9(0x35d)]){d[b9(0x35c)]='—';return;}d[b9(0x206)]='',e[b9(0x276)]()[b9(0x164)]()[b9(0x13c)](f=>{const ba=b9,g=document[ba(0xc0)](ba(0x223));g[ba(0x35c)]=f[ba(0x2eb)]+ba(0x2e5)+f[ba(0x212)]+ba(0x2b5)+f[ba(0xd4)]+ba(0x316)+(f[ba(0x341)]===ba(0x34f)?ba(0x36f):f[ba(0x341)]===ba(0x2c0)?ba(0x1e8):ba(0x155)),d[ba(0x174)](g);});}async function refreshMyPays(){const bb=al;if(!currentUser||!fbReady())return;const c=await fbGetMyPayments(currentUser[bb(0x30b)]);if(!c)return;const d=mergePays(Demo[bb(0x335)](),c);Demo[bb(0x318)](d),renderMyPaysBox(d);}function renderMyPays(){const bc=al;renderMyPaysBox(Demo[bc(0x335)]());if(currentUser&&fbReady())refreshMyPays();}async function submitPayment(){const bd=al;if(!currentUser){$(bd(0x121))[bd(0x35c)]=bd(0x310),selectAuthTab(bd(0x28d)),$(bd(0x2ea))[bd(0x1aa)]({'behavior':bd(0x1b8)});return;}const c=(SETTINGS[bd(0x370)]||[])[Number($(bd(0xc4))[bd(0x1ad)]||0x0)],d=$(bd(0x385))[bd(0x1ad)][bd(0x2ce)](),e=$(bd(0x2bc))[bd(0x1ad)][bd(0x2ce)]()[bd(0x38a)]();if(!c||!d||!e){$(bd(0x121))[bd(0x35c)]=bd(0x11d);return;}if(Demo[bd(0x335)]()[bd(0x1ee)](h=>h[bd(0xd4)]===e)){$(bd(0x121))[bd(0x35c)]=bd(0x20f);return;}if(fbReady()){const h=await fbGetPayment(e);if(h){$(bd(0x121))[bd(0x35c)]=bd(0x20f);return;}}const f={'trxid':e,'uid':currentUser[bd(0x30b)],'email':currentUser[bd(0x262)],'sender':d,'planName':c[bd(0x311)],'price':c[bd(0x212)],'days':c[bd(0x18f)],'status':bd(0x14e),'createdAt':Date[bd(0x26f)]()},g=Demo[bd(0x335)]();g[bd(0x182)](f),Demo[bd(0x318)](g);if(fbReady()){const i=await fbSavePayment(f);if(!i){$(bd(0x121))[bd(0x35c)]=bd(0x2b2),$(bd(0x2bc))[bd(0x1ad)]='',renderMyPays(),renderAdmin();return;}}$(bd(0x121))[bd(0x35c)]=bd(0x392),$(bd(0x2bc))[bd(0x1ad)]='',renderMyPays(),renderAdmin();}function renderAdminPaysBox(c){const be=al,d=$(be(0x295));if(!d)return;const e=(c||[])[be(0x2c2)](f=>f[be(0x341)]===be(0x14e));d[be(0x206)]=e[be(0x35d)]?'':be(0x208),e[be(0x13c)](f=>{const bf=be,g=document[bf(0xc0)](bf(0x223));g[bf(0x28e)][bf(0x3a1)]=bf(0x281),g[bf(0x35c)]=f[bf(0x2eb)]+bf(0x2e5)+f[bf(0x212)]+bf(0x316)+f[bf(0x262)]+bf(0x34c)+f[bf(0x267)]+bf(0x2b5)+f[bf(0xd4)]+'\x20';const h=document[bf(0xc0)](bf(0x320));h[bf(0x308)]=bf(0x2cc),h[bf(0x35c)]=bf(0x1bb),h[bf(0x1e5)]=()=>decidePayment(f[bf(0xd4)],!![]);const i=document[bf(0xc0)](bf(0x320));i[bf(0x308)]=bf(0x2d8),i[bf(0x35c)]=bf(0x111),i[bf(0x1e5)]=()=>decidePayment(f[bf(0xd4)],![]),g[bf(0x174)](h),g[bf(0x174)](i),d[bf(0x174)](g);});}async function refreshAdminPays(){const bg=al;if(!isAdminUser(currentUser)||!fbReady())return;const c=await fbGetPaymentsForAdmin();if(!c)return;const d=mergePays(Demo[bg(0x335)](),c);Demo[bg(0x318)](d),renderAdminPaysBox(d);}function renderAdmin(){const bh=al;if(!isAdminUser(currentUser))return;renderAdminPaysBox(Demo[bh(0x335)]());if(fbReady())refreshAdminPays();$(bh(0x37b))[bh(0x1ad)]=SETTINGS[bh(0x2ab)],$(bh(0x193))[bh(0x1ad)]=SETTINGS[bh(0x110)],$(bh(0x1c8))[bh(0x1ad)]=SETTINGS[bh(0x2de)],$(bh(0x2bb))[bh(0x1ad)]=SETTINGS[bh(0x1bd)]??0x14,$(bh(0x27c))[bh(0x1ad)]=SETTINGS[bh(0x10c)]||'',$(bh(0x27a))[bh(0x1ad)]=SETTINGS[bh(0x170)]||'',$(bh(0x258))[bh(0x1ad)]=SETTINGS[bh(0x1c1)]||'',$(bh(0x17f))[bh(0x1ad)]=SETTINGS[bh(0x382)]||'',$(bh(0x137))[bh(0x1ad)]=SETTINGS[bh(0x33b)]||'';}async function loadAdminUsers(){const bi=al,c=$(bi(0xcf));if(!c)return;if(!isAdminUser(currentUser)){c[bi(0x35c)]=bi(0x102);return;}if(!fbReady()){c[bi(0x35c)]=bi(0x1e7);return;}c[bi(0x35c)]=bi(0x282);try{const d=await FB[bi(0x26e)][bi(0x21f)](FB[bi(0x26e)][bi(0x15b)](FB['db'],bi(0x364))),f=[];d[bi(0x13c)](g=>{const bj=bi,h=g[bj(0x37a)]()||{};f[bj(0x182)]({'uid':g['id'],'email':h[bj(0x262)]||'','name':h[bj(0x311)]||'','plan':h[bj(0x30d)]||bj(0x312),'proUntil':h[bj(0x329)]||0x0,'createdAt':h[bj(0x2ee)]||0x0});}),f[bi(0x17d)]((g,h)=>(h[bi(0x2ee)]||0x0)-(g[bi(0x2ee)]||0x0));if(!f[bi(0x35d)]){c[bi(0x35c)]=bi(0x241);return;}c[bi(0x206)]=f[bi(0x10f)](g=>{const bk=bi,h=g[bk(0x30d)]===bk(0x2b0)&&g[bk(0x329)]&&Date[bk(0x26f)]()<g[bk(0x329)],i=g[bk(0x329)]?new Date(g[bk(0x329)])[bk(0xf1)](bk(0x225)):'—',j=g[bk(0x2ee)]?new Date(g[bk(0x2ee)])[bk(0xf1)](bk(0x225)):'—';return bk(0x1c5)+escapeHtml(g[bk(0x311)]||g[bk(0x262)]||g[bk(0x30b)])+bk(0xea)+escapeHtml(g[bk(0x262)]||'')+bk(0xea)+(h?bk(0xed)+i:bk(0x240))+bk(0x25f)+j+bk(0x11f);})[bi(0x1fd)]('');}catch(g){c[bi(0x35c)]=bi(0x346)+errText(g);}}async function decidePayment(c,d){const bl=al,e=Demo[bl(0x335)](),f=e[bl(0x394)](g=>g[bl(0xd4)]===c);if(!f)return;f[bl(0x341)]=d?bl(0x34f):bl(0x2c0),Demo[bl(0x318)](e);if(fbReady())await fbSavePayment(f);if(d){let g=userDoc(f[bl(0x30b)]);if(!g&&fbReady())g=await fbGetUserDoc(f[bl(0x30b)]);if(g){g[bl(0x30d)]=bl(0x2b0),g[bl(0x329)]=Date[bl(0x26f)]()+Number(f[bl(0x18f)])*0x18*0xe10*0x3e8,saveUserDoc(f[bl(0x30b)],g);if(currentUser&&currentUser[bl(0x30b)]===f[bl(0x30b)])currentUser=Object[bl(0x144)]({'uid':f[bl(0x30b)]},g);}}renderAll(),refreshAuthUI();}async function saveSettingsFromForm(){const bm=al,c=defaultCode();SETTINGS[bm(0x2ab)]=$(bm(0x37b))[bm(0x1ad)][bm(0x2ce)]()||SETTINGS[bm(0x2ab)],SETTINGS[bm(0x110)]=$(bm(0x193))[bm(0x1ad)][bm(0x2ce)](),SETTINGS[bm(0x2de)]=$(bm(0x1c8))[bm(0x1ad)][bm(0x2ce)](),SETTINGS[bm(0x1bd)]=Number($(bm(0x2bb))[bm(0x1ad)]||0x0),SETTINGS[bm(0x10c)]=$(bm(0x27c))[bm(0x1ad)],SETTINGS[bm(0x170)]=$(bm(0x27a))[bm(0x1ad)],SETTINGS[bm(0x1c1)]=$(bm(0x258))[bm(0x1ad)],SETTINGS[bm(0x382)]=$(bm(0x17f))[bm(0x1ad)],SETTINGS[bm(0x33b)]=$(bm(0x137))[bm(0x1ad)],saveSettingsLocal(),renderAll(),applyDefaultCodeToEditor(c);if(isAdminUser(currentUser)&&fbReady()){const d=await fbSaveSiteSettings();$(bm(0x150))[bm(0x35c)]=d?bm(0x199):bm(0x1ed);}else $(bm(0x150))[bm(0x35c)]=bm(0x1ba);}function defaultCode(){const bn=al;return SETTINGS[bn(0x33b)]&&SETTINGS[bn(0x33b)][bn(0x2ce)]()?SETTINGS[bn(0x33b)]:SAMPLE_HTML;}function applyDefaultCodeToEditor(c){const bo=al,d=$(bo(0x12c));if(!d)return;const e=d[bo(0x1ad)];(!e[bo(0x2ce)]()||e===SAMPLE_HTML||c&&e===c)&&(d[bo(0x1ad)]=defaultCode(),updatePreview());}const SAMPLE_HTML=al(0x326);function designLayout(c,d){const bp=al,e=Math[bp(0x2c4)](c,d)/0x500;return{'lw':Math[bp(0x2c6)](c/e),'lh':Math[bp(0x2c6)](d/e),'scale':e};}function exportSize(){const bq=al,c=($(bq(0x1cb))[bq(0x1ad)]||bq(0x246))[bq(0x1d3)]('x');return{'W':Number(c[0x0]),'H':Number(c[0x1])};}function editSettings(){const br=al;return{'speed':Number($(br(0x22b))?$(br(0x22b))[br(0x1ad)]:0x1)||0x1,'zoom':Number($(br(0x298))?$(br(0x298))[br(0x1ad)]:0x1)||0x1,'dx':Number($(br(0x284))?$(br(0x284))[br(0x1ad)]:0x0)||0x0,'dy':Number($(br(0x1b7))?$(br(0x1b7))[br(0x1ad)]:0x0)||0x0,'blur':Number($(br(0x348))?$(br(0x348))[br(0x1ad)]:0x0)||0x0,'bokeh':Number($(br(0x2fe))?$(br(0x2fe))[br(0x1ad)]:0x0)||0x0,'seamless':!!($(br(0x12b))&&$(br(0x12b))[br(0xdf)])};}function renderFormat(){const bs=al;return($(bs(0x33e))?$(bs(0x33e))[bs(0x1ad)]:bs(0x1fc))||bs(0x1fc);}function syncRenderBtn(){const bt=al,c=$(bt(0x2f2));if(c)c[bt(0x35c)]=bt(0x145)+renderFormat()[bt(0x38a)]();}function a(){const cq=['C2f2zufJy291BNrZ','yNv0Dg9U','Cgf1C2u','Bg9HzcbLCNjVCG','Cgf5qw1VDw50','yw5PBwf0Aw9U','C2vUzfbHC3n3B3jKuMvZzxrfBwfPBa','pcfet0nuwvbfigH0BwW+pgH0BwW+pgHLywq+pg1LDgeGy2HHCNnLDd0IDxrMltGIpJXZDhLSzt4kkNTTyxjNAw46mdTWywrKAw5NoJa7yM94lxnPEMLUzZPIB3jKzxiTyM94FqPIB2r5E3DPzhrOoJeWmhz3o2HLAwDODdOXmdb2AdTVDMvYzMXVDZPOAwrKzw47yMfJA2DYB3vUzdPSAw5LyxiTz3jHzgLLBNqOmtm1zgvNlcmWnZe2mZmSiZi1nJnLyIa1nsuSiZiYzdnLzsK7zM9UDc1Myw1PBhK6C3LZDgvTlxvPlhnHBNmTC2vYAwy7zgLZCgXHEtPMBgv4o2fSAwDUlwL0zw1ZoMnLBNrLCJTQDxn0Awz5lwnVBNrLBNq6y2vUDgvYFqOUz2XVD3TWB3nPDgLVBJPHyNnVBhv0ztT3Awr0AdO2mhzTAw47AgvPz2H0oJyWDM1PBJTIB3jKzxiTCMfKAxvZoJuWjtTIywnRz3jVDw5KoNjNyMeOmZqSmJeXldiZocWUntuPo2zPBhrLCJPIBhvYkdqWChGPo2fUAw1HDgLVBJPMBg9HDca1CYbLyxnLlwLUlw91DcbPBMzPBML0zsbHBhrLCM5HDgv9cI5NBg93lMj7BgvMDdO4jtT0B3a6mtiLo2jHy2TNCM91BMq6CMDIysG1osWXmZaSmJq2lc42ktTHBMLTyxrPB24TzgvSyxK6ltjZFqOUz2XVDY5JE3jPz2H0oJyLo2jVDhrVBtOXmcu7D2LKDgG6ndr2BwLUo2HLAwDODdO0nhzTAw47yMfJA2DYB3vUzdPYz2jHkdi1nsWYntuSmJu1lc4ZnsL9cKbRzxLMCMfTzxmGzMXVyxr7zNjVBxT0CMfUC2zVCM06DhjHBNnSyxrLwsGTmZbWEcKGC2nHBguOmsL9Dg97DhjHBNnMB3jToNrYyw5ZBgf0zvKOmZbWEcKGC2nHBguOms4XnsL9FqPOmxTWB3nPDgLVBJPYzwXHDgL2ztT6lwLUzgv4oJi7y29SB3i6i2zMzJTMB250lxnPEMu6mtf2DZT0zxH0lwfSAwDUoMnLBNrLCJTSAw5LlwHLAwDODdOXlJa1o3rLEhqTC2HHzg93oJaGohb4idmWChGGCMDIysGWldaSmcWUmZuPo2fUAw1HDgLVBJPWB3aGnxmGzwfZzs1PBI1VDxqGAw5MAw5PDguGywX0zxjUyxrLFqPOmsbZCgfUE2nVBg9YoImYmMqZzwv9cKbRzxLMCMfTzxmGCg9WE2zYB217DhjHBNnMB3jToNnJywXLkc45ncK7Bgv0DgvYlxnWywnPBMC6lJaYzw19Dg97DhjHBNnMB3jToNnJywXLkdeUmdqPo2XLDhrLCI1ZCgfJAw5NoI4WogvTFx0kChTWB3nPDgLVBJPHyNnVBhv0ztT6lwLUzgv4oJi7yM90Dg9ToJKLo3DPzhrOoJeWmcu7Dgv4Dc1HBgLNBJPJzw50zxi7y29SB3i6i2vHzJjMzJTMB250lxnPEMu6mY4YDNC7Bgv0DgvYlxnWywnPBMC6lJm1zw07yw5PBwf0Aw9UoMzHzguGnxmGzwfZzs1PBI1VDxqGAw5MAw5PDguGywX0zxjUyxrLFqPaA2v5zNjHBwvZigzHzgv7zNjVBxTVCgfJAxr5oI41nx10B3TVCgfJAxr5oJf9FqO8l3n0EwXLpJWVAgvHzd48yM9KEt4kpgrPDIbJBgfZCZ0Iz2XVDYi+pc9KAxy+pgrPDIbJBgfZCZ0Iz2XVDYbIiJ48l2rPDJ48zgL2ignSyxnZpsjNBg93igmIpJWVzgL2pGO8Ade+tu9usu9opgjYpJXZCgfUpLnut0nlpc9ZCgfUpJWVAde+pha+ufjftuLvtsbtve9dsYbwsurftZWVCd4kpc9IB2r5pJWVAhrTBd4','ihbYBW','AxrLCMf0Aw9UCW','ChjVvw50AwW','C2nHBgu','yNrUsgvYB1nPz251Ca','ode2nKzVqvbRCW','ie1ckq','sg93ihrVihDYAxrLigeGChjVBxb0oIb3CML0zsb5B3vYigLKzweGAw4GveHftuuSihrLBgWGDgHLiefjihrVigDPDMuGEw91igeGzNvSBc1Zy3jLzw4Gyw5PBwf0zwqGsfrntcbWywDLihDPDgGGBM8GzxH0zxjUywWGAw1Hz2vZig9YigXPBMTZlG','AgvPz2H0','z2v0u2vJB25KCW','y2XPCgjVyxjK','uMvUzgvYigeGDMLKzw8GzMLYC3qSihrOzw4GChjLC3mGrg93BMXVywqU','iokaLcb1BNrPBca','y29SDw1UlwDHCa','Cgf5CW','rNjHBwuGAw1Hz2uGzMfPBgvKihrVigXVywqGkfnwrYbMB3jLAwDUt2jQzwn0ksdIGjqGCMvTB3zLigv4DgvYBMfSigLTywDLCY9MB250CYbMCM9TihrOzsbive1mlcbHBMqGB3bLBIb0AguGC2L0zsbVDMvYigH0DhbZicHhAxriDwiGugfNzxmP','yM9RzwHpDG','txKGCgf5BwvUDhmGBg9HzcbMywLSzwq6','t3bLBIdIHPi','ue9tva','zgvMyxvSDenVzgu','u3r1zgLV','Aw1Hz2uVCg5N','zM10','odi0mJH6Eu9utem','C3bHBG','C3rHDhvZ','Dgv4Dc1ZAgfKB3C','ugXLyxnLihDYAxrLigfUigLKzweGzMLYC3qG4OcuiguUzY4GBMLNAhqGC2T5ihDPDgGGy29TzxrZlG','y291BNqXmdGW','BxnFBgLJzw5Zzq','q291BgqGBM90igXVywqGDxnLCNm6ia','CMvUzgvYrNjHBwu','yMX1CG','y29UDgfPBNm','z2v0rNvSBfLLyxi','re9nq29UDgvUDeXVywrLza','iokaOIbtzw5Kzxi6ia','CMvHzefZrgf0yvvsta','uhjViokaLca2ie1VBNrOCW','yxbWCM92zwq','quKGyw5PBwf0Aw9UihjLywr5iokaLcbWCMvZCYbszw5KzxiU','tg9NigLUihrVihnLzsb5B3vYihjLCxvLC3rZigHLCMuU','ywrTAw4','yxzJms40mJaWmwy','BgLJxW','CMvHzhLtDgf0zq','Aw5JBhvKzxm','Bwf4lxDPzhrO','CxvLCNLtzwXLy3rVCG','yM9YzgvYlwXLzNqTD2LKDgG','yxv0Ae1Vza','zgf0ytPPBwfNzs9ZDMCREg1So2nOyxjZzxq9DxrMltGS','Dgv4DenVBNrLBNq','BgvUz3rO','DhjHBNnPDgLVBG','CMvZDg9Yzq','mtO3mJu4ntGWotKWnZi6D2vIoMrJmtfIyMu3ntK1zgqZztqXmwfInJu','yNrUq2XLyxi','ChGGyxqG','C3rHCNrZv2L0Aa','DxnLCNm','y2XVBMvoB2rL','yM9YzgvYlwnVBg9Y','Dg9eyxrHvvjm','Aw5KzxHpzG','yNrUq29WEvbYB21WDa','B3v0BgLUzs13Awr0Aa','BMf2ugXHBNm','ChGG','C2LNBMfS','DxnLzdeWoda','4PYfiefWChjVDMvK','CgXHBNm','u2fTCgXLigXVywrLzcdIGjqGChjLC3mGuMvUzgvYlG','B25LCNjVCG','yM90Dg9T','zgXjBMzV','Cg9ZwfzHBa','zxjY','Dg9tDhjPBMC','y29WEq','x192y0fKDMfUy2u','zgf0yq','C2v0qNjHBMq','y29TCg9ZAxrL','Bw90Aw9UC3rVy2STC3r1zgLV','uMvUzgvYigeGDMLKzw8GzMLYC3qSihrOzw4GC2HHCMuGAxqU','twfRzsbTzsbHigz1BgWTC2nYzwvUigfUAw1HDgvKieHutuWGCgfNzs4GveHftuu6ifT3CML0zsb5B3vYigLKzweGAgvYzv0UifvZzsbVBMX5ieHutuWGkYbdu1mGkYbkuYbHBMLTyxrPB24Sig5Vigv4DgvYBMfSigLTywDLCYbVCIbSAw5RCY4GvgHLigfUAw1HDgLVBIbZAg91BgqGCgXHEsbIzwf1DgLMDwXSEsbSAwTLigeGBg9VCcbPBIaXmcbZzwnVBMrZlcbZDwL0ywjSzsbMB3iGysbTAwnYB3n0B2nRihzPzgvVlG','ChGSihjNyMeO','phn2zYb4BwXUCZ0IAhr0CdOVl3D3DY53mY5VCMCVmJaWmc9ZDMCIihDPzhrOpsi','ChjVBxb0vgvTCgXHDgu','qurnsu5Fru1bsuXt','C2nYB2XSvg8','Cgf5u2vUzgvY','DhjHBNnMB3jT','yM9KEq','oJPHzNrLCG','Bwf4lwHLAwDODa','Dg9vChbLCKnHC2u','Aw5UzxjizwLNAhq','DgfItg9NAw4','BwHYBwf6AgfYDwW5ndyZqgDTywLSlMnVBq','rMLYzwjHC2uGC2LNBNvWigzHAwXLzcWGDxnPBMCGzgvTBYbTB2rLoG','quLFv09ss0vsx1vsta','yM9YzgvYlxDPzhrO','icfPBxbVCNrHBNq','4PYfifjLCxvLC3qGC3vIBwL0DgvKiokaLcb0AguGywrTAw4GD2LSBcb2zxjPzNKGAxqGyw5KigfJDgL2yxrLifbYBY4','zg9JDw1LBNrfBgvTzw50','zMLUza','zMLSzvbPy2S','pc9IpIa8C3bHBJ4','ChjVBxb0vhbS','zMX1C2G','igrHExm','jMX0oW','ndi3nJK0EwPSyLHS','CgfZC3DVCMq','Bg9NAw4','y2XHC3nmAxn0','pc9ZDhLSzt4','zxHPC3rZ','y3nZvgv4Da','CxvLCNLtzwXLy3rVCKfSBa','zg9J','BxLqyxLZ','Aw5WDxq','EM9VBvzHBa','CMvXDwvZDa','y3jLyxrLvxnLCLDPDgHfBwfPBefUzfbHC3n3B3jK','pc9MB3jLAwDUt2jQzwn0pJWVC3zNpG','r2vUzxjHDgLUzYb5B3vYigfUAw1HDgLVBUkaPIb0AgLZignHBIb0ywTLihvWihrVigeGBwLUDxrLlG','ugXLyxnLigvUDgvYigfUigvTywLSigfUzcbHihbHC3n3B3jKig9Migf0igXLyxn0idyGy2HHCMfJDgvYCY4','y3jLyxrLrwXLBwvUDa','zMLUywXPEMu','y29UzMLNDxjL','CMfUzg9T','Cgf5ugXHBG','AxnVBq','ywrKrxzLBNrmAxn0zw5LCG','BNvTyMvY','Dw5KzwzPBMvK','pgj1DhrVBIbPzd0IyNrUu2HVD0f1DgGIignSyxnZpsjNAg9ZDci+tg9NieLUic8Gu2LNBIbvCdWVyNv0Dg9UpG','mtqWldiYmcWYntu','4PYfifzPzgvVihnOyxjLzc4','zMLSzxm','m0zmrKX2zG','B2zMC2v0','ywrTAw5vC2vYCW','zgf0yxnLDa','zg93BMXVywq','BgLJzw5Zzq','AxndB25MAwDtDxbWB3j0zwq','Dhj4Awq','CMvWBgfJzq','4PYfifnPz25Lzcb1Cc4Gv2vSy29Tzsb0BYbnB3rPB25tDg9JAYbtDhvKAw8H','CM93lwDHCa','BwfYz2LUlwjVDhrVBq','ChG7BwfYz2LUoJa7CgfKzgLUzZOWo292zxjMBg93oMHPzgrLBIi+phn0EwXLpG','AgfZ','z2v0sxrLBq','tM8GywnJB3vUDcbMB3vUzcbMB3iGDgHPCYbLBwfPBc4','tw90Aw9Uu3rVy2SGu3r1zgLV','yM9YzgvYlwXLzNqTy29SB3i','y2HLy2TLza','DhjHBNnSyxrL','yM9YzgvYlwjVDhrVBs1YAwDODc1YywrPDxm','yMXVyG','yw5PBwf0Aw9UoM5VBMuGiwLTCg9YDgfUDa','Bgv0DgvYlxnWywnPBMC','tvnt','DM1PBG','yxv0Ac91C2vYlw5VDc1MB3vUza','w2rHDgeTy2fWpsi','y29KzwmGCgLJAW','iokaLca','BxnNt2S','w29IAMvJDcbfDMvUDf0','uhjVihvUDgLSia','BwLUlxDPzhrO','jImZotS','ywnJB3vUDhm','Dg9mB2nHBgveyxrLu3rYAw5N','ywLtDgf0Dxm','Ahr0Chm6lY91BNbRzY5JB20VBxa0lw11EgvYqduUms4Zl2j1AwXKl21Wnc1TDxHLCI5QCW','ChG7AgvPz2H0oG','4PYfifbHC3n3B3jKihvWzgf0zwqUifLVDsbJyw4GBg9NigLUig5VDYb3AxrOihrOzsbUzxCGCgfZC3DVCMqU','4P2mifjLBMrLCIbMywLSzwqGkhy2lJaSia','qw1VDw50oIdGP7m','z2v0','ldaPideWmcuP','yxv0AeTLEq','Ahr0Chm6lY93D3CUz3n0yxrPyY5JB20VzMLYzwjHC2vQCY8Xmc4XmI4Yl2zPCMvIyxnLlwzPCMvZDg9Yzs5QCW','DgfIu2LNBNvW','Dg9Nz2XL','yxv0Aa','4PYfifbYBYbHy3rPDMf0zwqGDw50AwWG','sgLKzsbWyxnZD29Yza','BMf2u3r1zgLV','qwrTAw4GB25SEs4','ksa2mcuSihjNyMeO','C2LNBK91Da','Aw1WB3j0yw50','yxv0Ac9LBwfPBc1HBhjLywr5lwLUlxvZzq','ChjVDg9JB2W','DgfI','ugXLyxnLigvUDgvYigeGDMfSAwqGzw1HAwWGywrKCMvZCY4','ChGP','yxbWBgLJyxrPB24VANnVBG','DgLJA2vY','DMLKzw8VBxa0','sgvSBg8SieKGD2fUDcbqCM8GzM9Yia','BwfW','D2HHDhnHCha','uMvQzwn0','C2vZC2LVBG','Bw90Aw9UC3rVy2STDMLKzw8U','yNrUuMvZzxq','z2XVyMfSqwXWAge','ic8G','yNrUsgvYB0XPy2vUC2u','pgrPDIbZDhLSzt0NzM9UDc13zwLNAhq6nZaWjZ4','CgfKzgLUzY1Szwz0','jsaO','lMjYyw5K','zw5JB2rL','ugXLyxnLigzPBgWGAw4GDgHLihbSyw4SigjlyxnOig51BwjLCIbHBMqGvhj4suqU','z2v0rg9J','pc9KAxy+','yM9YzgvYlwjVDhrVBs1JB2XVCG','Cgf5txnN','4PYfifnPz25Lzcb1CcdIGjqGEw91igfYzsb0AguGywrTAw4SifbYBYbPCYbHy3rPDMuGkhLVDsbUzxzLCIbUzwvKihrVigj1EsbqCM8PlG','CgXHBKDYAwrmyw5KAw5N','C2v0uhjVCgvYDhK','y29SB3i','uhjViokaLcaXie1VBNrO','Dg9W','yxv0AfbHC3mY','4PYfifbYB21WDcbJB3bPzwqU','BM9YBwfS','C2vHBwXLC3m','C3jJ','zgvTB0jHBM5LCG','Cgf5BwvUDhm','AhjLzG','CMv2B2TLt2jQzwn0vvjm','rgLYzwn0ihnOyxjPBMCGAxmGBM90ihn1ChbVCNrLzcbPBIb0AgLZigjYB3DZzxiG4OcuigrVD25SB2fKihrOzsb2AwrLBYbHBMqGC2HHCMuGAxqU','iJ48zM9YzwLNBK9IAMvJDcb3Awr0Ad0ImtaWjsiGAgvPz2H0psiXmdaLiJ4','DhLWzq','4P2mifrOAxmGyNjVD3nLCIaOB3bLBMvKigLUC2LKzsbHBIbHChaPigHHCYbUBYb2AwrLBYbLBMnVzgvYlIbpCgvUihrOzsbSAw5RigLUihrOzsbdAhjVBwuGyxbWigfUzcb0CNKGywDHAw46igjYB3DZzxiGBwvUDsaO4OUUksdIHPiGj09Wzw4GAw4Gq2HYB21LjY4GrxHWB3j0ihDVCMTZig9UihLVDxiGCgHVBMuGAwyGq2HYB21LigLZihvWihrVigrHDguU','DgfYz2v0','zNjHBwuG','C2v0rgvMyxvSDenVzgu','ugf5BwvUDcbZyxzLigzHAwXLzdO','ihbVCa','yw5PBwf0Aw9Ulw5HBwu','y2XVC2u','zM9YrwfJAa','yMfJA2DYB3vUzc1JB2XVCG','ueftveu','Dg9VBhm','DgLTzw91Da','zwrPDejVzhK','yxv0Ac9PBNzHBgLKlwvTywLS','zMXLEc1NCM93','yxnZAwDU','4PA2ifjLBMrLCIa','z2v0q29UDgv4Da','yNrUqwLhzw4','Aw5PDgLHBgL6zufWCa','Aw5UzxjxAwr0Aa','p3rLEhq9','z2v0q29TChv0zwrtDhLSzq','yxbPs2v5','ywn0AxzL','CgvUzgLUzW','igrHExmG4OcIiefSBcbqCM8GzMvHDhvYzxm8l2rPDJ4','C2v0txnN','zM9UDc1ZAxPL','zNbZ','sfrntcbYzwfKEq','yxzJms42ndaWmZi','4O+ZifbLBMrPBMC','v2HHDhnbCha6ia','mJu1lde4mcWYmda','yxbWvMLLDW','yM9YzgvYlxjPz2H0lwnVBg9Y','DMLZAwjPBgL0Eq','y29SBgvJDgLVBG','4PYfierVBMuHia','B3bHy2L0Eq','mde3ndeXoti3mdu','i3bYB21WDa','4P2mieLUDMfSAwqGB3iGzxHWAxjLzcbSAwnLBNnLigTLEs4GugXLyxnLignOzwnRihrOzsbRzxKGyw5KihrYEsbHz2fPBI4','mtf5tNfIDNG','Axnbzg1PBG','Ahr0Chm6lY93ys5Tzs8','CMv2zxjZzq','y2fSBa','yNrUtgLJzw5Zzq','y2f0y2G','zgvZyW','CxvHBgL0Eq','Cg9ZwvzHBa','CgfKzgLUzY10B3a','Aw4TBwvTB3j5','yNrUu2HVD0f1DgG','zg9JDw1LBNq','y2HHCKnVzgvbDa','BM90AwnL','yxv0AejVEa','Dgv4Dc9ODg1S','4PYfieXVz2DLzcbPBI4','yxbWzw5Kq2HPBgq','zNjVBq','zwzMzwn0','CYaVia','DgfYz2v0rw5K','yM9YzgvYlxjPz2H0lxDPzhrO','qwjVCNrfCNjVCG','ChjVzW','y3jLyxrLuMfKAwfSr3jHzgLLBNq','C29YDa','DgfNtMfTzq','C2v0uhjVBxb0vhbS','DgLTzxi','CMDIysG','ChvZAa','C3rHCNq','ywrKq29SB3jtDg9W','pc9IpIdIGjqG','BxnFC2v0DgLUz3m','DMfSDwvZ','Bw90Aw9UC3rVy2STC3r1zgLVlMzPCMvIyxnLC3rVCMfNzs5HCha','zhvY','ktOG','w3n0EwXLxq','BxnNrxjY','igzYyw1LCYK','yxbW','zgf5CW','z2v0twLUDxrLCW','y2XPy2S','Ahr0Chm6lY93D3CUz3n0yxrPyY5JB20VzMLYzwjHC2vQCY8Xmc4XmI4Yl2zPCMvIyxnLlwf1DgGUANm','C2v0v2e','jNf1B3q7','iokaLcbWCMvZCYb0AguGrg93BMXVywqGyNv0Dg9UigjLBg93lG','mZaZmteYvLzls3Dl','mcaW','BMf2rMfX','4PYfifnLDhrPBMDZihnHDMvKigzVCIbLDMvYEw9Uzs4','BxnN','otveyu1cyvu','D2LKDgG','txv4zxi','mJu1ldi1nsWYntu','quKGzxjYB3iGkeHuvfaG','rw1HAwWGB3iGCgfZC3DVCMqGzg9LCYbUB3qGBwf0y2GU','C3rYAw5NAwz5','tw90Aw9UsgvYBYbcyxrJAcbsDw5Uzxi','quKGDg9VAYb0B28GBg9UzYdIGjqGCgXLyxnLihrYEsbHz2fPBI4','C2f2zq','zMLSztO','yNrUrMLSzq','CMvZAxPL','C2nYAxb0','rNjLzsdIGkiGvw5SAw1PDgvKihjLBMrLCMLUzW','C2nYB2XSsw50B1zPzxC','q291BgqGBM90ihnLBMqGDgHLihjLC2v0igXPBMSUifbSzwfZzsb0CNKGywDHAw4U','D2fYBG','DMfSDwu','u2HVDYdILRG','AhrTBa','yMfJA2DYB3vUza','z2v0tw9UDgG','yxv0AfzPzxC','zMLSBfjLy3q','C3bLzwrwywW','u2L0zsbZzxr0Aw5NCYbSB2fKigzHAwXLzdO','yNL0zuXLBMD0Aa','Cg9Zwq','C21VB3rO','zw5JB2rLigrVBMu','4PYfifnLDhrPBMDZihnHDMvKlIaOsw4GzgvTBYbTB2rLlcbPBIb0AgLZigjYB3DZzxiGB25SEtSGD2L0AcbgAxjLyMfZzsbPDcbZyxzLCYbMB3iGzxzLCNLVBMuUkq','qxbWCM92zq','Bg9JyxrPB24','zNjLzteWodbmAw1PDa','zNvUy3rPB24','q3jLyxrLigfUAw1HDgLVBIbWCM9TChrZigzVCIbTAwnYB3n0B2nRlG','rgvTBYbTB2rLoIb0ExbLihLVDxiGtKvxihbHC3n3B3jKicHHDcbSzwfZDca2ignOyxjHy3rLCNmPigLUihrOzsbqyxnZD29YzcbMAwvSzcWGDgHLBIbJBgLJAYaNrM9Yz290ihbHC3n3B3jKpYCGywDHAw4GDg8GC2f2zsbPDc4','z3vPzgu','Ahr0Chm6lY93D3CUz3n0yxrPyY5JB20VzMLYzwjHC2vQCY8Xmc4XmI4Yl2zPCMvIyxnLlwfWCc5QCW','CMvTB3zLqxr0CMLIDxrL','CMvTB3zL','pgrPDJ4','odGW','Bxa0lw11EgvYigrPzcbUB3qGBg9HzcdIGjqGy2HLy2SGEw91CIbPBNrLCM5LDcaO','C2v0qMTHC2G','ksaWjsWGCMDIysG','yM9YzgvYlwjVDhrVBs1Szwz0lxjHzgL1CW','C2L6zq','y29Kzq','yxv0AfbHC3m','yxv0AevTywLS','C2LNBKLUv2L0AevTywLSqw5KugfZC3DVCMq','lIbdAgvJAYb5B3vYigLUyM94icHHBMqGC3bHBsbMB2XKzxiPlG','yNrUvxbNCMfKzq','quKGzMfPBgvKoIa','C3bSAxq','z2v0rMLYzxn0B3jL','zw5JB2rLuxvLDwvtAxPL','vw5RBM93BIbLCNjVCG','zMLSBa','BMf2qwrTAw4','pc9KAxy+pgrPDIbJBgfZCZ0NBxv0zwqNpG','quL6yvn5qw1brw5PuKTnBgXuz3bqqMiYuxK0rwi4rgDjAeflAxi4','CMvSzwfZzq','pgrPDIb4BwXUCZ0IAhr0CdOVl3D3DY53mY5VCMCVmtK5os94AhrTBciGC3r5Bgu9iNDPzhrOoG','C2vYAwfSAxPLvg9tDhjPBMC','BwfYz2LUlxjPz2H0','u2L0zsbZzxr0Aw5NCYbZyxzLigzHAwXLzdO','tw90Aw9Uu3rVy2S','yxzJms42ndaWmZq','tg9Nie91Da','phn2zYb2Awv3qM94psiWidaGmJqGmJqIihDPzhrOpsiXociGAgvPz2H0psiXociGzMLSBd0IBM9UzsiGC3rYB2TLpsjJDxjYzw50q29SB3iIihn0CM9Rzs13Awr0Ad0ImIiGC3rYB2TLlwXPBMvJyxa9iNjVDw5KiIbZDhjVA2uTBgLUzwPVAw49iNjVDw5KiJ48Cgf0AcbKpsjnmsaXmNm0ltGGmteTocaXmsa4ideXidGTnca4lteXidGTmteToc0Xms04EIiVpJXJAxjJBguGy3G9iJeYiIbJEt0ImtiIihi9iJmIlZ48l3n2zZ4','BMf2uhjVBxb0','B25JBgLJAW','yM9YzgvYlxjHzgL1CW','rMLYzwjHC2uGAxmGBM90ignVBMzPz3vYzwqG4OcuihrOzsb1C2vYCYbSAxn0igLZig9UBhKGyxzHAwXHyMXLihDPDgGGrMLYzwjHC2uU','4P2mifjLAMvJDgvK','yxzJms42ndaWmJG','BwLU','CgfKzgLUzY1IB3r0B20','yM9RzwHwywW','4PYfifnLDhrPBMDZihnHDMvKigLUihrOAxmGyNjVD3nLCIbVBMX5icHJB3vSzcbUB3qGCMvHy2GGDgHLihnOyxjLzcbZzxr0Aw5NCYdIGjqGy2HLy2SGrMLYzwjHC2uPlG','C29Tzq','mZuWodKWmfvetKLIvW','Dg9mB3DLCKnHC2u','CxvLCNK','ChjLCgvUza','C2v0u2vZC2LVBG','C3jJzg9J','ChGS','DgfItgLJzw5Zzq','BgvMDa','DxnLCKfNzw50','yxv0Ae1ZzW','ie1ciokaLcbWCMvZCYbeB3DUBg9Hzcb0BYbZyxzLihrOzsbMDwXSigzPBguU','tw90Aw9Uu3rVy2SGu3r1zgLVigLZig5VDYaXmdaLiezsruuGzM9Yigv2zxj5B25LiokaLcb1BMXPBwL0zwqGneSGBw90Aw9UihzPzgvVihjLBMrLCNmSignVBxbSzxrLBhKGzNjLzse','Bxa0','AM9PBG','zxjYB3i','pc9ZCgfUpG','A2v5CW','mJu1ldiXncWXnda','z2v0vgLTAw5N','BwfYz2LU','CMvWBgfJzvDPDgG','Bxa0lw11EgvYigrPzcbUB3qGBg9HzcdIGjqGy2HLy2SGEw91CIbPBNrLCM5LDa','Aw5Uzxjive1m','uhjLCgfYAw5N4OcM','tM8GCgvUzgLUzYbYzxf1zxn0CY4','mc4WCW','D3jPDgvuzxH0','tM8GzNjHBwvZigvUy29KzwqGkdaGy2H1BMTZksdIGjqGDgHPCYbZAxPLl2nVzgvJigLZig5VDcbZDxbWB3j0zwqGB24GDgHPCYbKzxzPy2uSihrYEsaXmdGWCa','rMLYzxn0B3jLihnHDMuGzMfPBgvKoG','yxv0B0rS','AgvHza','qsbYzxf1zxn0ihDPDgGGDgHPCYbuCNHjrcb3yxmGywXYzwfKEsbZDwjTAxr0zwqU','ntruC1fvqw0','B3v0zxjive1m','ChjPy2u','yxjPys1SywjLBa','BwvZC2fNzq','pcfet0nuwvbfigH0BwW+cG','yMfZzvvssq','y29UDgvUDfDPBMrVDW','C2v0DgLUz3m','nti5mZqWwe9bzfPX','BM90AwnLqM94','rMLYzwjHC2uGBg9NAw4GzMfPBgvKlcb0CNLPBMCGzgvTBYbTB2rLoG','CMLNAhq','B25SB2fK','yMfJA2DYB3vUzc1WB3nPDgLVBG','z2v0rg9JCW','DMLKzw8VCxvPy2T0Aw1L','BxnFC2vZC2LVBG','DhjHBNnMB3jTlxn0EwXL','zgL2','yNrUvg9Nz2XLrwrPDa','zw4Tr0i','phn2zYb2Awv3qM94psiWidaGmJqGmJqIihDPzhrOpsiXociGAgvPz2H0psiXociGzMLSBd0IBM9UzsiGC3rYB2TLpsjJDxjYzw50q29SB3iIihn0CM9Rzs13Awr0Ad0ImIiGC3rYB2TLlwXPBMvJyxa9iNjVDw5KiIbZDhjVA2uTBgLUzwPVAw49iNjVDw5KiJ48Cgf0AcbKpsjnmtCUotqGmtCUotrbmtaUmdCGmtaUmdCGmcaWideGmtiGmJbJltCGmc0Xms04lteXltHHmtGUnduGmtGUnduGmcaWideGns4WnI01lJK0ttKUosa0lJi0qtKUmtiGos4XmIaWidaGmsaXmIa0yZCGmcaXmsa4ideXidHHmtGUnsaXoc41idaGmcaXltiUmtyGmY4Xow0TnI43mI0XlJa3ytmGmYaWideGms00lJi0ltqUmJqIlZ48BgLUzsb4mt0ImsiGEte9iJeIihGYpsiYmYiGEti9iJiZiI8+pc9ZDMC+','DgLJA2vYvgv4Da','quKGAxmGBM90ignVBM5Ly3rLzcb5zxqG4OcuihrOzsbZAxrLig93BMvYig5LzwrZihrVihnLDcb1Ccb0AguGquKGv29YA2vYigzPCNn0lG','pc9KAxy+pgrPDIbJBgfZCZ0NChjPy2uNpUcNSW','iZaWma','C3bLzwq','z2v0qw5PBwf0Aw9UCW','otG5zgvImte2zdGXztLJnZDIywq0mJnInZrLyJC4nZK','yxjJ','z2v0sg91CNm','rMLYzxn0B3jLihjLywqGzMfPBgvKoG','zM9JDxm','zgLZCgXHEtPIBg9JAZT3Awr0AdOXmdaLo2HLAwDODdOXmdaLo21HCMDPBJOWo3bHzgrPBMC6ma','4PYfifbHC3n3B3jKihjLC2v0igXPBMSGC2vUDcb0BYa','AgLKzgvU','BgLUzs1OzwLNAhq','EI1PBMrLEa','yNrUu2f2zvnLDhrPBMDZ','CgvYC3bLy3rPDMuTB3jPz2LU','yxv0Ae5HBwu','DxnLCG','ChGPihnJywXLka','z2v0uhjVCgvYDhLwywX1zq','vgHLiefjihjLDhvYBMvKigfUihvUDxnHyMXLigfUC3DLCIdIGjqGCgXLyxnLihrYEsbHz2fPBIb3AxrOigeGzgLMzMvYzw50ihbYB21WDc4','yNrUu2HHCMu','yMX1CLzHBa','rNjLzq','tM8GDxnLCNmGEwv0lG','nNb4ida','ChjLDMLLDW','yMX1CIG','DgL0Bgu','mti4mhG3mJa','pgi+','ugXLyxnLihbHC3rLihLVDxiGsfrntcbJB2rLig9YigXVywqGDgHLifnHBxbSzsbMAxjZDc4','D2fRzuXVy2S','zgf0ytO','yxv0AevTywLSmG','BgLUA1TYzwW9iNn0EwXLC2HLzxqIxq','zgf0ys1Jyxa','yM94lxnOywrVDW','DhjHBNnMB3jTt3jPz2LU','BwfYz2LUlwXLzNq','igj5DgvZlca','y3vYCMvUDfrPBwu','zgLZywjSzwq','u2HHCMLUzYb3yxmGy2fUy2vSBgvKlG','txa0txv4zxi','CgLSBa','rw50zxiGEw91CIbLBwfPBcbPBIb0AguGrw1HAwWGzMLLBgqGzMLYC3qSihrOzw4Gy2XPy2SGj0zVCMDVDcbWyxnZD29Yzd8NlG','C2v0r3vPzgu','Bw90Aw9UC3rVy2STC3r1zgLVlMzPCMvIyxnLyxbWlMnVBq','D29Yzc1ZCgfJAw5N','yxzJ','4QYhierVD25SB2fKia','ywLqCM9TChq','C2v0','iokaLcbQB2LUzwqG','lNb3vg9Nz2XL','jMD0oW','zw1HAwW','rMLYzwjHC2uGzgLKig5VDcbSB2fKlcbYDw5UAw5NigLUigrLBw8GBw9KztO','ChjLDMvUDerLzMf1Bhq','C2v0rg9J','qsbdAhjVBwuGzxH0zw5ZAw9UigzVCIbIyxrJAcb2AwrLBYbJCMvHDgLVBIbVBIbTB3rPB25OzxjVlM5LDc4','C2vUzgvY','Bw9UDgHZ','BMf2uhjV','y2XPCc1WyxrO','4P2mifjLBMrLCIbKB2vZig5VDcb3B3jRigLMihLVDsbKB3vIBguTy2XPy2SGDgHLigzPBguGDg8GB3bLBIbPDcdIGjqGq2HYB21LigjSB2nRCYbMAwXLoI8VihbHz2vZigzYB20GCMvHy2HPBMCGAw5ZAwrLihrOzsbPzNjHBwuUifvWBg9HzcbPDcb0BYbhAxriDwiGugfNzxmGyw5Kig9Wzw4GDgHLigH0DhbZigXPBMSSihrOzw4GChjLC3mGuMvUzgvYlG','zhjHD0LTywDL','yMvNAw5qyxrO','zNnnB2q','BM93','yM9YzgvYlwjVDhrVBs13Awr0Aa','yxzJms42ndaWmKe','Aw1N','Bxv4zxiGBg9Hza','yNrUugf5','y2HHBMDL','C2XPy2u','yMfJA2DYB3vUzc1ZAxPL','yM9YzgvYlxrVCc1Szwz0lxjHzgL1CW','ywjVCNq','C2v0tM90AwnL','DgLJA2vYqMfY','C2v0vgLJA2vY','zgf0ys1MB3i','BgLNAhrLCG','BwLUlwHLAwDODa','ksdIGjqGDgfYz2v0oIa','yMfJA2DYB3vUzdOJmgq0ntqWo2jVCMrLCJOXChGGC29SAwqGDMfYkc0TBgLUzsK7yM9YzgvYlxjHzgL1CZO4ChG7CgfKzgLUzZO4ChG7BwfYz2LUoJzWEcaW','tg9HzgLUz+kaPG','C3rYAw5N','Cg9Zwa','nZi1odu4mdK5mdCY','C3vWCg9YDgvK','z2v0qxr0CMLIDxrL','DxnLugLSBa','quKGuhjVBxb0ieHLBhbLCG','C2vSzwn0','zhvYyxrPB24','z2fW','C2LNBNvW','C3r5Bgu','D2HLCMu','zxHLy0nVBw1HBMq','iIbOzwLNAhq9iG','jMfTCdS','z2XVyMfSq29TCg9ZAxrLt3bLCMf0Aw9U','rxzLBNqGzxjYB3iGka','ywrTAw5qyxLZ','u2HVDYbWyxnZD29Yza','B3b0Aw9U','EM9VBq','zMXLEc1IyxnPCW','CgfKu3rHCNq','oJPIzwzVCMu','uhjViokaLcaXifLLyxi','vMLKzw8GzMLSzsbPCYbLBxb0EsaO','CgXHBLbPBgW','yNvMzMvY','CMfKAwfSlwDYywrPzw50kgnPCMnSzsa','BxnFCMvUzgvYx3nLCMLHBa','C2L0zq','Ahr0Chm6lY9Jzg4UANnKzwXPDNiUBMv0l25WBs9TCdqTBxv4zxjans4XlJmVyNvPBgqVBxa0lw11EgvYlMPZ','DgvZDa','Dg9VBhncB3G','yMTHC2HoBW','yNrUu2LNBNvW','kgz1BMn0Aw9UkcL7DMfYihz0ptaSC2vLzd0XmJm0nty3o3zHCIbFrgf0zt1eyxrLoWPMDw5JDgLVBIbsrgf0zsGPE3jLDhvYBIbHCMD1BwvUDhmUBgvUz3rOp25LDYbFrgf0zsGUlI5HCMD1BwvUDhmPoM5LDYbFrgf0zsH2DcL9cLjeyxrLlM5VDZ1MDw5JDgLVBIGPE3jLDhvYBIb2Dh07uKrHDguUCgfYC2u9x0rHDguUCgfYC2u7uKrHDguUvvrdpv9eyxrLlLvuqZT3Aw5KB3CUrgf0zt1srgf0ztSkDhj5E09IAMvJDc5KzwzPBMvqCM9Wzxj0EsH3Aw5KB3CUCgvYzM9YBwfUy2uSiM5VDYiSE3zHBhvLoMz1BMn0Aw9UkcL7CMv0DxjUihz0Fx0PFwnHDgnOkguPE30ktwf0Ac5Yyw5KB209zNvUy3rPB24OkxTZzwvKpsHZzwvKkJeXmdm1mtuYnduRmtiZnduPjtiXndC0odm2ndG7CMv0DxjUihnLzwqVmJe0nZq4mZy0oh07cNzHCIb0Aw1LCNm9w10SDgLKpta7cNDPBMrVDY5ZzxruAw1LB3v0pwz1BMn0Aw9UkgzUlg1ZkxT2yxiGAwq9kYT0Awq7DgLTzxjZlNb1C2GOE2LKoMLKlgf0oNz0kYHTC3X8mcKSzM46zM4SCMvWoJb9ktTYzxr1CM4GAwr9oWP3Aw5KB3CUC2v0sw50zxj2ywW9zNvUy3rPB24OzM4SBxmPE3zHCIbPzd0Rk3rPzdT0Aw1LCNmUChvZAcH7Awq6AwqSyxq6DNqRkg1ZFhWWksXMBJPMBIXYzxa6Bxn8Fdb9ktTYzxr1CM4GAwr9oWP3Aw5KB3CUy2XLyxjuAw1LB3v0pwz1BMn0Aw9UkgLKkxT0Aw1LCNm9DgLTzxjZlMzPBhrLCIHMDw5JDgLVBIH0kxTYzxr1CM4GDc5Pzce9pwLKFsL9oWP3Aw5KB3CUy2XLyxjjBNrLCNzHBd13Aw5KB3CUy2XLyxjuAw1LB3v0oWP3Aw5KB3CUCMvXDwvZDefUAw1HDgLVBKzYyw1Lpwz1BMn0Aw9UkgzUkxTYzxr1CM4GD2LUzg93lNnLDfrPBwvVDxqOzNvUy3rPB24OkxTMBIH2DcL9lde2kx07cNDPBMrVDY5Fx3zJqwr2yw5Jzt1MDw5JDgLVBIH0kxT2Dd10o3zHCIbKDwu9DgLTzxjZlMzPBhrLCIHMDw5JDgLVBIH4kxTYzxr1CM4GEc5HDdW9DNr9ktSkDgLTzxjZpxrPBwvYCY5MAwX0zxiOzNvUy3rPB24OEcL7CMv0DxjUihGUyxq+DNr9ktSkzhvLlMzVCKvHy2GOzNvUy3rPB24OEcL7Dhj5E3GUzM4Okx1JyxrJAcHLkxT9igLMkhGUCMvWkxT0Aw1LCNmUChvZAcH7Awq6Ec5PzcXHDdP2DcT4lNjLCcXMBJP4lMzUlhjLCdP4lNjLCh0PFx0Po307cNDPBMrVDY5Fx3zJu2v0pwz1BMn0Aw9UkhqPE3z0pxr9o30PkcK7','rg9UzsdIGjqGEw91CIbHBMLTyxrPB24GAxmGCMvHzhKGAw4GDgHLigvKAxrVCI4GuhjLC3mGuMvUzgvYihrVigv4Cg9YDcbPDc4','CgfYC2u','yNjHBMq','ywrKvMLKzw9dAhvUAW','ugf5BwvUDhmGBg9HzcbMywLSzwq6','DMLK','yNrUrgW','ChjV','C2nYzwvU','uMvXDwvZDcbZyxzLzcbPBIb0AgLZigjYB3DZzxiGB25SEsdIGjqGy291BgqGBM90ihjLywnOihrOzsbZzxj2zxiUifbSzwfZzsb0CNKGywDHAw4GB3iGy29UDgfJDcb0AguGywrTAw4GB24Gv2HHDhnbChaU','zwfZAw5N','B25bDxrOu3rHDgvdAgfUz2vK','iokaOIbuCNHjrdOG','8j+oRca8yJ4','BwfYz2LUlxrVCa','BxnFCgf5CW','yxzJms42ndaWmZm','zNbZlG','C2v0rNjLzteWoda','Cgf5vhj4','z2v0s2v5zNjHBwvZ','ChjLDMLLD1DYyxa','zNjVBunOyxjdB2rL','CMvQzwn0zwq','C2f2zvvZzxjZ','zMLSDgvY','C2v0qxr0CMLIDxrL','Bwf4','ndi0nJG0teDPB2TY','CM91BMq','y2fUu2HHCMu','zMLSzsbYzwfKEq','y2fUDMfZ','z2v0rwXLBwvUDej5swq','DxjS','z29Sza','y3jLyxrLt2jQzwn0vvjm','DhjPBq','CgvYC3bLy3rPDMu','ywrK','B3v0BgLUzs1JB2XVCG','ignODw5RksdIGjqGneSGAxmGBM90ihn1ChbVCNrLzcbVBIb0AgLZigrLDMLJzsWGDhj5ideWodbW','D2fmAw5R','lNrHyG','uhjVifvZzxi','yMfJA2zHy2uTDMLZAwjPBgL0Eq','ANnVBG','z2HVC3q','sgLKzsdILR4','yNrUtg9NAw4','ChjLDMLLDYbSB2fK','ugf5BwvUDcbYzwfKigzHAwXLzdO','ChjVAMvJDeLK','yMTHC2G','yNrUtg9HzfvZzxjZ','qxjYyxLcDwzMzxjuyxjNzxq','uhjViokaLcaZie1VBNrOCW','Bxv0zwq','icHnt1yGyNjHBMrPBMCGzMfPBgvKiokaLcbZyxzLzcbHCYbnudqP','yM9YzgvYlxrVCc1YAwDODc1YywrPDxm','iokaLcdGP7m','4P2mifrOAxmGyNjVD3nLCIbOyxmGBM8GDMLKzw8Gzw5JB2rLCIdIGjqGCgXLyxnLihvZzsbdAhjVBwuGkgrLC2T0B3aPlG','uhjV','zMHK','C2HHCMu','yxv0AenHCMq','CgXHBK5HBwu','Bg9HzgLUzW','BxnFywnJB3vUDhm','y3jLyxrLzef0','zMLSBfn0EwXL','Bw92','uMvUzgvYAw5N4OcMia','yNrUr28','qw4GywnJB3vUDcbHBhjLywr5igv4Axn0CYbMB3iGDgHPCYbLBwfPBcdIGjqGCgXLyxnLigXVzYbPBI4','yxv0BW','BxnFDxnLCNm','CgfYC2vgCM9Tu3rYAw5N','rKLsrujbu0u','zMXLEc1ZAhjPBMS','Dgv4Da','CM90yxrL','yNrUu2fTCgXL','zNr5Ca','r29VzcbozxDZisbnB3rPB25tDg9JAYbtDhvKAw8GAxmGBM93ideWmcuGrLjfrsbMB3iGzxzLCNLVBMuG4OcuihjLBMrLCIbZDhvUBMLUzYa0sYbTB3rPB24GDMLKzw9ZihDPDgGGvu5msu1jveveihjLBMrLCNmSignVBxbSzxrLBhKGzNjLzs4GtM8GBgLTAxrZlcbUBYbOAwrKzw4Gy2HHCMDLCY4','yM9RzwG','ldaP','yM9YzgvYlxrVCc13Awr0Aa','CgfKzgLUzY1YAwDODa','C2v0sxrLBq','yM9YzgvYlxrVCc1JB2XVCG','BM9Uzq','Aw11Ba','ChjVDg90ExbL','y29TCgXLDgu','y2XHC3noyw1L','DhjHBNnMB3jTlw9YAwDPBG','z2v0qxv0Aa','DwLK','zgLZCgXHEq','CgXHBG','z2v0rgf0zq','Dg9gAxHLza','ugXLyxnLignYzwf0zsbHigzYzwuGywnJB3vUDcbMAxjZDcWGDgHLBIbZDwjTAxqGEw91CIbWyxLTzw50lG','BMfTzq','zNjLzq','8j+uKIa','CMvZDwX0','yxzJms40zdaWmJG','iokaOIa','DhjHBNnSyxrLka','C2f2zvbHExm','u2nYAxb0igrPzcbUB3qGBg9HzdOG','y2XPzw50v2LKDgG','Bxa0lw11EgvYiefYCMf5qNvMzMvYvgfYz2v0ig5VDcbMB3vUzcdIGjqGBgLICMfYEsbKAwqGBM90igXVywq','CgfZCW','ig1VBNrO','iokaLcbive1mihrVifzPzgvVifn0DwrPBYbMB3iGtwLJCM9ZDg9JAW'];a=function(){return cq;};return a();}function bokehOrbs(){const bu=al;let c=0x12d687;const d=()=>{return c=c*0x19660d+0x3c6ef35f>>>0x0,c/0x100000000;},e=[bu(0x19e),bu(0x201),bu(0xca),bu(0x157)],f=[];for(let g=0x0;g<0x10;g++){f[bu(0x182)]({'x':0.05+d()*0.9,'y':0.05+d()*0.9,'r':0.02+d()*0.05,'c':e[g%e[bu(0x35d)]],'a':0.25+d()*0.45});}return f;}const BOKEH_ORBS=bokehOrbs();function drawBokeh(c,d,e,f){const bv=al;if(!f||f<=0x0)return;const h=f/0x64;c[bv(0x1a4)](),c[bv(0x293)]=bv(0x27e);for(const i of BOKEH_ORBS){const j=i['x']*d,l=i['y']*e,m=Math[bv(0x2c4)](0x2,i['r']*d),n=c[bv(0x17c)](j,l,0x0,j,l,m);n[bv(0x184)](0x0,bv(0x181)+i['c']+','+i['a']*h+')'),n[bv(0x184)](0.6,bv(0x181)+i['c']+','+i['a']*h*0.4+')'),n[bv(0x184)](0x1,bv(0x181)+i['c']+bv(0x2ff)),c[bv(0x2ef)]=n,c[bv(0x26d)](),c[bv(0x22e)](j,l,m,0x0,Math['PI']*0x2),c[bv(0x1d7)]();}c[bv(0x35f)]();}function fitPreview(){const bw=al,c=$(bw(0x243));if(!c)return;const d=exportSize(),e=designLayout(d['W'],d['H']),f=$(bw(0x2be)),g=f&&f[bw(0x31a)]>0x0?f[bw(0x31a)]:Math[bw(0x1ea)](0x3e8,window[bw(0x149)]-0x30),h=Math[bw(0x2c6)](window[bw(0x38b)]*0.72);let i=Math[bw(0x1ea)](g,Math[bw(0x2c6)](h*(e['lw']/e['lh']))),j=Math[bw(0x2c6)](i*(e['lh']/e['lw']));j>h&&(j=h,i=Math[bw(0x2c6)](j*(e['lw']/e['lh'])));if(f)f[bw(0x28e)][bw(0x32f)]=j+'px';c[bw(0x28e)][bw(0x19c)]=e['lw']+'px',c[bw(0x28e)][bw(0x32f)]=e['lh']+'px';const l=editSettings(),m=i/e['lw'],n=m*l[bw(0x298)],o=(i-i*l[bw(0x298)])/0x2+l['dx']*i/0x64,p=(j-j*l[bw(0x298)])/0x2+l['dy']*j/0x64;c[bw(0x28e)][bw(0x24f)]=bw(0x197),c[bw(0x28e)][bw(0x386)]=bw(0x317)+o+bw(0x1f5)+p+bw(0x23b)+n+')',c[bw(0x28e)][bw(0x2c2)]=l[bw(0x348)]>0x0?bw(0x244)+l[bw(0x348)]+bw(0x10a):'';const q=$(bw(0x337));if(q){q[bw(0x28e)][bw(0x1f7)]=o+'px',q[bw(0x28e)][bw(0x127)]=p+'px',q[bw(0x28e)][bw(0x19c)]=Math[bw(0x2c6)](e['lw']*n)+'px',q[bw(0x28e)][bw(0x32f)]=Math[bw(0x2c6)](e['lh']*n)+'px';if(l[bw(0x2fe)]>0x0){const r=l[bw(0x2fe)]/0x64,t=Math[bw(0x2c4)](0x1,Math[bw(0x2c6)](e['lw']*n)),u=Math[bw(0x2c4)](0x1,Math[bw(0x2c6)](e['lh']*n));q[bw(0x28e)][bw(0x1b0)]=BOKEH_ORBS[bw(0x10f)](v=>{const bx=bw,w=Math[bx(0x2c6)](v['x']*t),z=Math[bx(0x2c6)](v['y']*u),A=Math[bx(0x2c4)](0x2,Math[bx(0x2c6)](v['r']*t));return bx(0x2a0)+A+bx(0x362)+w+bx(0x36c)+z+bx(0x380)+v['c']+','+v['a']*r+bx(0x1c9)+v['c']+','+v['a']*r*0.4+bx(0x103)+v['c']+bx(0xf9);})[bw(0x1fd)](',\x20'),q[bw(0x28e)][bw(0x15d)]='1';}else q[bw(0x28e)][bw(0x1b0)]='',q[bw(0x28e)][bw(0x15d)]='0';}}let _pvTimer=0x0;function updatePreview(){fitPreview(),clearTimeout(_pvTimer),_pvTimer=setTimeout(async()=>{const by=b,c=$(by(0x12c))[by(0x1ad)],d=$(by(0x243));if(!c[by(0x2ce)]()){d[by(0x1c3)](by(0x1f4));return;}const f=exportSize(),g=designLayout(f['W'],f['H']);d[by(0x2c3)](by(0x19c),g['lw']),d[by(0x2c3)](by(0x32f),g['lh']);try{d[by(0x1f4)]=await prepareHtml(c);}catch(h){d[by(0x1f4)]=c;}fitPreview(),startPreviewDriver();},0xfa);}let _pvRaf=0x0,_pvLast=0x0,_pvVt=0x0;function stopPreviewDriver(){_pvRaf&&(cancelAnimationFrame(_pvRaf),_pvRaf=0x0);}function startPreviewDriver(){const bz=al;stopPreviewDriver();const c=$(bz(0x243));if(!c)return;_pvLast=performance[bz(0x26f)](),_pvVt=0x0;const d=new WeakMap();function e(f){const bA=bz;_pvRaf=requestAnimationFrame(e);try{const g=c[bA(0x217)];if(!g||!g[bA(0x16e)]||!g[bA(0x379)])return;const h=Math[bA(0x1ea)](0x64,f-_pvLast);_pvLast=f;const i=editSettings();_pvVt+=h*i[bA(0x22b)],g[bA(0x379)](Math[bA(0x2c6)](_pvVt)),g[bA(0x16e)][bA(0x22c)]()[bA(0x13c)](j=>{const bB=bA;try{if(!d[bB(0xda)](j))d[bB(0x25e)](j,_pvVt);j[bB(0x252)]=Math[bB(0x2c4)](0x0,_pvVt-d[bB(0xf8)](j)),j[bB(0x321)]();}catch(k){}});}catch(j){}}_pvRaf=requestAnimationFrame(e);}const VCLOCK=al(0x2a8);async function toDataURL(c){const bC=al;try{const d=await fetch(c),f=await d[bC(0xe2)]();return await new Promise((g,h)=>{const bD=bC,i=new FileReader();i[bD(0x21d)]=()=>g(i[bD(0x314)]),i[bD(0x372)]=h,i[bD(0x34d)](f);});}catch(g){return c;}}async function prepareHtml(c){const bE=al,d=new DOMParser()[bE(0x2f6)](c,bE(0x172)),f=document[bE(0x216)];for(const h of Array[bE(0x175)](d[bE(0x3a2)](bE(0x24c)))){try{const i=new URL(h[bE(0x287)](bE(0x12f)),f)[bE(0x12f)],j=await(await fetch(i))[bE(0x2f9)](),k=d[bE(0xc0)](bE(0x28e));k[bE(0x35c)]=j,h[bE(0x204)](k);}catch(l){}}for(const m of Array[bE(0x175)](d[bE(0x3a2)](bE(0x272)))){const n=m[bE(0x287)](bE(0x12c));if(n&&!n[bE(0x363)](bE(0x24a)))try{m[bE(0x2c3)](bE(0x12c),await toDataURL(new URL(n,f)[bE(0x12f)]));}catch(o){}}const g=d[bE(0xc0)](bE(0x1a8));return g[bE(0x35c)]=VCLOCK,(d[bE(0x20e)]||d[bE(0x393)])[bE(0x1f2)](g),bE(0x215)+d[bE(0x393)][bE(0x211)];}function loadScript(c){return new Promise((d,e)=>{const bF=b,f=document[bF(0xc0)](bF(0x1a8));f[bF(0x12c)]=c,f[bF(0x21d)]=d,f[bF(0x372)]=()=>e(new Error(bF(0x319)+c)),document[bF(0x20e)][bF(0x174)](f);});}async function loadMuxer(){const bG=al;if(window[bG(0x255)])return window[bG(0x255)];try{await loadScript(bG(0x2a3));}catch(c){try{await loadScript(bG(0xf3));}catch(d){throw new Error(bG(0x1c7)+d[bG(0x214)]+')');}}if(!window[bG(0x255)])throw new Error(bG(0x205));return window[bG(0x255)];}function b(c,d){c=c-0xbf;const e=a();let f=e[c];if(b['cnFfYT']===undefined){var g=function(j){const l='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/=';let m='',n='';for(let o=0x0,p,q,r=0x0;q=j['charAt'](r++);~q&&(p=o%0x4?p*0x40+q:q,o++%0x4)?m+=String['fromCharCode'](0xff&p>>(-0x2*o&0x6)):0x0){q=l['indexOf'](q);}for(let s=0x0,t=m['length'];s<t;s++){n+='%'+('00'+m['charCodeAt'](s)['toString'](0x10))['slice'](-0x2);}return decodeURIComponent(n);};b['oGwLaB']=g,b['httWRp']={},b['cnFfYT']=!![];}const h=e[0x0];b['HZjAtg']!==h&&(b['httWRp']={},b['HZjAtg']=h);const i=b['httWRp'][c];return i===undefined?(f=b['oGwLaB'](f),b['httWRp'][c]=f):f=i,f;}function sleep(c){return new Promise(d=>setTimeout(d,c));}async function waitFrameReady(c,d){const bH=al,f=Date[bH(0x26f)]();while(Date[bH(0x26f)]()-f<d){try{if(c&&c[bH(0x16e)]&&c[bH(0x16e)][bH(0x355)]===bH(0x307))return!![];}catch(g){}await sleep(0x64);}return!![];}let _capCanvas=null,_capW=0x0,_capH=0x0;function getCapCanvas(c,d){const bI=al;return(!_capCanvas||_capW!==c||_capH!==d)&&(_capCanvas=document[bI(0xc0)](bI(0x2c9)),_capW=c,_capH=d),_capCanvas[bI(0x19c)]=c,_capCanvas[bI(0x32f)]=d,_capCanvas;}async function captureFrame(c,d,f,g,h){const bJ=al,j=c[bJ(0x16e)];try{j[bJ(0x22c)]()[bJ(0x13c)](y=>{const bK=bJ;try{y[bK(0x321)]();}catch(z){}});}catch(y){}const l=j[bJ(0x365)](!![]);try{const z=[j[bJ(0x393)],...j[bJ(0x3a2)]('*')],A=[l[bJ(0x393)],...l[bJ(0x3a2)]('*')];let B='';for(let C=0x0;C<A[bJ(0x35d)]&&C<z[bJ(0x35d)];C++){try{const D=c[bJ(0x14b)](z[C]),E=A[C],F=[bJ(0x386),bJ(0x15d),bJ(0x2c2),bJ(0xe0),bJ(0x2fa),bJ(0x32a),bJ(0x222),bJ(0x2d6),bJ(0x2cf),bJ(0x238),bJ(0x13d),bJ(0x125),bJ(0x366),bJ(0x303),bJ(0x159),bJ(0x120),bJ(0xde),bJ(0x1e6),bJ(0x278),bJ(0x2e4),bJ(0xe1),bJ(0x1ca),bJ(0x390),bJ(0x300),bJ(0x179),bJ(0x270),bJ(0x359),bJ(0x19c),bJ(0x32f),bJ(0xee),bJ(0x27f),bJ(0x357),bJ(0x389),bJ(0x1f7),bJ(0x127),bJ(0x21c),bJ(0x373),bJ(0x2b7),bJ(0x1de),bJ(0xd8),bJ(0x250),bJ(0x16b),bJ(0x301),bJ(0x1eb),bJ(0x119),bJ(0x151),bJ(0xe4),bJ(0x235),bJ(0x25a),bJ(0x26a),bJ(0x24e),bJ(0x342),bJ(0x21e),bJ(0x277),bJ(0x2d1),bJ(0x36a),bJ(0x15a),bJ(0x236),bJ(0x28c),bJ(0xd7),bJ(0x334),bJ(0x143),bJ(0x2f8),bJ(0x299)];try{const G=z[C][bJ(0x22c)]?z[C][bJ(0x22c)]():[];for(const I of G){try{const J=I[bJ(0x176)]&&I[bJ(0x176)][bJ(0x2bd)]?I[bJ(0x176)][bJ(0x2bd)]():[];for(const K of J){for(const L of Object[bJ(0x200)](K)){if(L===bJ(0xce)||L===bJ(0x2b3)||L===bJ(0x37c))continue;if(F[bJ(0x368)](L)===-0x1)F[bJ(0x182)](L);}}}catch(M){}}}catch(N){}for(const O of F){try{const P=D[bJ(0x23c)](O);if(P&&P!==bJ(0x304)&&P!==bJ(0x12a)&&!(O===bJ(0x15d)&&P==='1'))E[bJ(0x28e)][bJ(0x124)](O,P,bJ(0x105));}catch(Q){}}E[bJ(0x28e)][bJ(0x124)](bJ(0x324),bJ(0x304),bJ(0x105)),E[bJ(0x28e)][bJ(0x124)](bJ(0x35e),bJ(0x304),bJ(0x105));for(const R of[bJ(0x29b),bJ(0x388)]){try{const S=c[bJ(0x14b)](z[C],R);if(!S||S[bJ(0x23c)](bJ(0x13a))===bJ(0x304))continue;const T=[];for(const U of[bJ(0x386),bJ(0x15d),bJ(0x1f7),bJ(0x127),bJ(0x19c),bJ(0x32f),bJ(0x13d),bJ(0x125),bJ(0x21e),bJ(0x277),bJ(0x26a),bJ(0x1e6),bJ(0x24e),bJ(0x151),bJ(0xe4)]){const V=S[bJ(0x23c)](U);if(V&&V!==bJ(0x304)&&V!==bJ(0x2f4)&&V!==bJ(0x12a)&&!(U===bJ(0x15d)&&V==='1'))T[bJ(0x182)](U+':'+V+bJ(0x391));}T[bJ(0x182)](bJ(0xe3)),E[bJ(0x2c3)](bJ(0x24d),C),B+=bJ(0xe8)+C+'\x22]'+R+'{'+T[bJ(0x1fd)](';')+'}';}catch(X){}}}catch(Y){}}if(B){const Z=l[bJ(0xc0)](bJ(0x28e));Z[bJ(0x35c)]=B,(l[bJ(0x20e)]||l[bJ(0x393)])[bJ(0x174)](Z);}}catch(a0){}const m=j[bJ(0x3a2)](bJ(0x2c9));l[bJ(0x3a2)](bJ(0x2c9))[bJ(0x13c)]((a1,a2)=>{const bL=bJ;try{const a3=m[a2];if(!a3)return;const a4=l[bL(0xc0)](bL(0x272));a4[bL(0x2c3)](bL(0x12c),a3[bL(0x367)](bL(0x33d))),a4[bL(0x28e)][bL(0x3a1)]=bL(0x232),a1[bL(0x204)](a4);}catch(a5){}}),l[bJ(0x3a2)](bJ(0x1a8))[bJ(0x13c)](a1=>a1[bJ(0x1c4)]());if(g&&h)try{const a1=l[bJ(0x387)];if(a1){const a2=g[bJ(0x32a)]*h[bJ(0x298)],a3=(d-d*h[bJ(0x298)])/0x2+h['dx']*d/0x64,a4=(f-f*h[bJ(0x298)])/0x2+h['dy']*f/0x64;a1[bJ(0x28e)][bJ(0x124)](bJ(0x19c),g['lw']+'px',bJ(0x105)),a1[bJ(0x28e)][bJ(0x124)](bJ(0x32f),g['lh']+'px',bJ(0x105)),a1[bJ(0x28e)][bJ(0x124)](bJ(0x309),bJ(0x197),bJ(0x105)),a1[bJ(0x28e)][bJ(0x124)](bJ(0x386),bJ(0x317)+a3+bJ(0x1f5)+a4+bJ(0x23b)+a2+')',bJ(0x105));}}catch(a5){}try{if(g){const a6=g['lw']/0x64,a7=g['lh']/0x64,a8=Math[bJ(0x1ea)](g['lw'],g['lh'])/0x64,a9=Math[bJ(0x2c4)](g['lw'],g['lh'])/0x64,aa=/(\d+(?:\.\d+)?)(vw|vh|vmin|vmax)\b/g,ab=(ac,ad,ae)=>{const bM=bJ,af=parseFloat(ad);if(ae==='vw')return af*a6+'px';if(ae==='vh')return af*a7+'px';if(ae===bM(0xe6))return af*a8+'px';return af*a9+'px';};l[bJ(0x3a2)](bJ(0x28e))[bJ(0x13c)](ac=>{const bN=bJ;try{if(ac[bN(0x35c)])ac[bN(0x35c)]=ac[bN(0x35c)][bN(0xd5)](aa,ab);}catch(ad){}}),l[bJ(0x3a2)](bJ(0x18b))[bJ(0x13c)](ac=>{const bO=bJ;try{const ad=ac[bO(0x287)](bO(0x28e));if(ad)ac[bO(0x2c3)](bO(0x28e),ad[bO(0xd5)](aa,ab));}catch(ae){}});}}catch(ac){}const n=Array[bJ(0x175)](l[bJ(0x3a2)](bJ(0x28e)))[bJ(0x10f)](ad=>ad[bJ(0x35c)])[bJ(0x1fd)]('\x0a'),o=l[bJ(0x387)]?new XMLSerializer()[bJ(0x1dd)](l[bJ(0x387)]):'',q=bJ(0x1dc)+d+bJ(0xf4)+f+bJ(0xd9)+n+bJ(0x39f)+o+bJ(0x11f),r=new XMLSerializer()[bJ(0x1dd)](l),s=[bJ(0x381)+d+bJ(0x291)+f+bJ(0x132)+q+bJ(0x3a9),bJ(0x381)+d+bJ(0x291)+f+bJ(0x132)+r+bJ(0x3a9)],t=new Image();let u=![];for(const ad of s){const ae=bJ(0x35b)+encodeURIComponent(ad);try{await new Promise((af,ag)=>{const bP=bJ,ah=setTimeout(()=>ag(new Error(bP(0x140))),0x1f40);t[bP(0x21d)]=()=>{clearTimeout(ah),af();},t[bP(0x372)]=()=>{const bQ=bP;clearTimeout(ah),ag(new Error(bQ(0x322)));},t[bP(0x12c)]=ae;}),u=!![];break;}catch(af){}}if(!u)throw new Error(bJ(0x336));const w=getCapCanvas(d,f),x=w[bJ(0x146)]('2d');x[bJ(0x2ef)]=bJ(0x22a),x[bJ(0x1b3)](0x0,0x0,d,f);if(h&&h[bJ(0x348)]>0x0)x[bJ(0x2c2)]=bJ(0x244)+h[bJ(0x348)]*(g?g[bJ(0x32a)]:0x1)+bJ(0x10a);x[bJ(0x26c)](t,0x0,0x0,d,f),x[bJ(0x2c2)]=bJ(0x304);if(h&&h[bJ(0x2fe)]>0x0)drawBokeh(x,d,f,h[bJ(0x2fe)]);return createImageBitmap(w);}function tierOf(c,d){const bR=al,e=Math[bR(0x1ea)](c,d);if(e<=0x2d0)return'hd';if(e<=0x438)return bR(0x2e8);return bR(0x2b0);}function isProUser(c){const bS=al;if(!c)return![];if(isAdminUser(c))return!![];return!!(c[bS(0x30d)]===bS(0x2b0)&&c[bS(0x329)]&&Date[bS(0x26f)]()<c[bS(0x329)]);}function gateCheck(c,d){return{'ok':!![]};}const CODECS=[al(0x1e1),al(0x2b9),al(0x154),al(0x271),al(0x1e9),al(0x315),al(0x353)];function noEncoderMsg(){const bT=al,c=navigator[bT(0x1f8)]||'',d=/Android|iPhone|iPad|iPod/i[bT(0x2a4)](c);if(d)return bT(0x134);return bT(0x2e6);}async function pickCodec(c,d,f){const bU=al;if(typeof VideoEncoder===bU(0xc8))return null;for(const g of CODECS){try{const h=await VideoEncoder[bU(0xd3)]({'codec':g,'width':c,'height':d,'bitrate':0x7a1200,'framerate':f});if(h&&h[bU(0x286)])return g;}catch(i){}}return null;}function errText(c){const bV=al;if(!c)return bV(0x1d6);var d='';try{d=Object[bV(0x306)][bV(0x377)][bV(0x165)](c);}catch(g){}if(d===bV(0xec)||c&&typeof c[bV(0x133)]===bV(0x283)&&!c[bV(0x214)]){var f='?';try{if(c[bV(0x135)])f=c[bV(0x135)][bV(0x12c)]||c[bV(0x135)][bV(0x17e)]||c[bV(0x135)]['id']||'?';}catch(h){}return bV(0x294)+(c[bV(0x133)]||bV(0x1fe))+bV(0x280)+f;}if(typeof Event!==bV(0xc8)&&c instanceof Event)return bV(0x294)+(c[bV(0x133)]||bV(0x1fe))+')';if(c&&c[bV(0x214)])return c[bV(0x214)];return String(c);}let exporting=![],lastBlobUrl=null,lastFile=null,lastFmt=al(0x1fc),_renderSerial=0x0;function nextRenderSerial(){const bW=al;try{let c=Number(localStorage[bW(0xdb)](bW(0x2a1))||0x0)||0x0;return c++,localStorage[bW(0x302)](bW(0x2a1),String(c)),c;}catch(d){return++_renderSerial;}}function renderFileName(c,e,f,g){const bX=al,h=new Date(),i=(o,q)=>String(o)[bX(0x29a)](q,'0'),j=h[bX(0x34a)]()+i(h[bX(0x1b1)]()+0x1,0x2)+i(h[bX(0x30e)](),0x2),k=i(h[bX(0x22f)](),0x2)+i(h[bX(0x190)](),0x2)+i(h[bX(0x330)](),0x2),l=i(nextRenderSerial(),0x3),m=(typeof SETTINGS!==bX(0xc8)&&SETTINGS[bX(0x2ab)]||bX(0x1e0))[bX(0x1d3)]('\x20')[0x0][bX(0xd5)](/[^A-Za-z0-9]/g,'')||bX(0x1e0);return m+'-'+j+'-'+k+'-'+l+'-'+c+'x'+e+'-'+f+bX(0x2ba)+g;}function toMov(c){const bY=al;try{const d=new Uint8Array(c);if(d[bY(0x35d)]<0x1c)return null;const f=d[0x0]<<0x18|d[0x1]<<0x10|d[0x2]<<0x8|d[0x3],g=String[bY(0x2bf)](d[0x4],d[0x5],d[0x6],d[0x7]),h=String[bY(0x2bf)](d[0x8],d[0x9],d[0xa],d[0xb]);if(g!==bY(0x2fc)||f!==0x1c||h!==bY(0xc5))return null;const i=new Uint8Array(d),j=[0x71,0x74,0x20,0x20];return i[bY(0x25e)](j,0x8),i[bY(0x25e)](j,0x10),i[bY(0x25e)](j,0x14),i[bY(0x25e)](j,0x18),i[bY(0x29f)];}catch(k){return null;}}async function doExport(){const bZ=al;if(exporting)return;if(window[bZ(0x1bc)][bZ(0x107)]===bZ(0x1a5)){$(bZ(0x341))[bZ(0x35c)]=bZ(0x26b);return;}const c=$(bZ(0x12c))[bZ(0x1ad)][bZ(0x2ce)]();if(!c){$(bZ(0x341))[bZ(0x35c)]=bZ(0x248);return;}if(typeof VideoEncoder===bZ(0xc8)){$(bZ(0x341))[bZ(0x35c)]=noEncoderMsg();return;}const d=exportSize(),f=d['W'],g=d['H'],h=designLayout(f,g),j=editSettings(),k=Number($(bZ(0x152))[bZ(0x1ad)]),l=Math[bZ(0x2c4)](0x1,Math[bZ(0x1ea)](0x3c,Number($(bZ(0x189))[bZ(0x1ad)]||0xa))),m=Number($(bZ(0x169))[bZ(0x1ad)]||0.25),n=gateCheck(f,g);if(!n['ok']){$(bZ(0x341))[bZ(0x35c)]=bZ(0x313)+n[bZ(0x19a)];return;}exporting=!![],$(bZ(0x2f2))[bZ(0x253)]=!![],$(bZ(0x17b))[bZ(0x39e)][bZ(0x1c4)](bZ(0x234)),$(bZ(0x2af))[bZ(0x39e)][bZ(0x2d0)](bZ(0x234)),$(bZ(0x374))[bZ(0x39e)][bZ(0x2d0)](bZ(0x234)),$(bZ(0x341))[bZ(0x35c)]=bZ(0x207);let o=bZ(0x183),p=null;try{p=await navigator[bZ(0x249)][bZ(0x3a7)](bZ(0x2b1));}catch(r){}try{o=bZ(0x273);const t=await loadMuxer();o=bZ(0xe9);const u=await pickCodec(f,g,k);if(!u)throw new Error(noEncoderMsg());const v=Math[bZ(0x1ea)](0x7270e00,Math[bZ(0x2c6)](f*g*k*m));if(typeof t[bZ(0x2e0)]!==bZ(0x1be))throw new Error(bZ(0x31b));const x=new t[(bZ(0x19d))]({'target':new t[(bZ(0x2e0))](),'fastStart':bZ(0x16c),'video':{'codec':bZ(0x25b),'width':f,'height':g}});let y=null,z=null,A=0x0;const B=new VideoEncoder({'output':(a1,a2)=>{const c0=bZ;try{A++,x[c0(0x2ac)](a1,a2);}catch(a3){if(!z)z=a3;}},'error':a1=>{y=a1;}});B[bZ(0xc2)]({'codec':u,'width':f,'height':g,'bitrate':v,'framerate':k}),o=bZ(0x153);const C=await prepareHtml(c),D=$(bZ(0x347));D[bZ(0x28e)][bZ(0x19c)]=h['lw']+'px',D[bZ(0x28e)][bZ(0x32f)]=h['lh']+'px',D[bZ(0x1f4)]=C,o=bZ(0x2db),await waitFrameReady(D[bZ(0x217)],0x1f40),await sleep(0x190);const E=D[bZ(0x217)],F=Math[bZ(0x2c6)](l*k),G=Math[bZ(0x2c6)](l*0x3e8*j[bZ(0x22b)]),I=new WeakMap(),J=new WeakMap();let K=![];function L(a1){const c1=bZ;if(!j[c1(0x12b)])return null;if(J[c1(0xda)](a1))return J[c1(0xf8)](a1);let a2=null;try{const a3=a1[c1(0x176)]&&a1[c1(0x176)][c1(0x202)]?a1[c1(0x176)][c1(0x202)]():null,a4=a3&&typeof a3[c1(0x28b)]===c1(0xc7)?a3[c1(0x28b)]:0x0,a5=a3?a3[c1(0x328)]:0x1;if(a4>0x0&&a5===Infinity&&a4>=0x1f4){const a6=G/a4,a7=Math[c1(0x2c4)](0x1,Math[c1(0x2c6)](a6)),a8=a7/a6;a2={'scale':a8,'targetEnd':a7*a4};if(a8!==0x1)K=!![];}}catch(a9){}return J[c1(0x25e)](a1,a2),a2;}function M(a1){const c2=bZ;try{E[c2(0x16e)][c2(0x22c)]()[c2(0x13c)](a2=>{const c3=c2;try{if(!I[c3(0xda)](a2))I[c3(0x25e)](a2,a1);const a3=L(a2);let a4=Math[c3(0x2c4)](0x0,a1-I[c3(0xf8)](a2));if(a3){a4=a4*a3[c3(0x32a)];if(a4>a3[c3(0x178)])a4=a3[c3(0x178)];}a2[c3(0x252)]=a4,a2[c3(0x321)]();}catch(a5){}});}catch(a2){}}const N=j[bZ(0x12b)]?Math[bZ(0x2c4)](0x1,Math[bZ(0x1ea)](Math[bZ(0x2c6)](k),Math[bZ(0x2c6)](F*0.15))):0x0;let O=null;const P=document[bZ(0xc0)](bZ(0x2c9));P[bZ(0x19c)]=f,P[bZ(0x32f)]=g;for(let a1=0x0;a1<F;a1++){const a2=Math[bZ(0x2c6)](a1*0x3e8/k),a3=Math[bZ(0x2c6)](a2*j[bZ(0x22b)]);try{if(E[bZ(0x379)])E[bZ(0x379)](a3);}catch(a7){}if(a1===F-0x1){try{if(E[bZ(0x379)])E[bZ(0x379)](G);}catch(a8){}try{if(E[bZ(0x379)])E[bZ(0x379)](G+0x10);}catch(a9){}M(G+0x10),M(G+0x2bc);}else M(a3);await sleep(0xa),o=bZ(0x136)+(a1+0x1)+'/'+F;const a4=await captureFrame(E,f,g,h,j);j[bZ(0x12b)]&&a1===0x0&&(O=document[bZ(0xc0)](bZ(0x2c9)),O[bZ(0x19c)]=f,O[bZ(0x32f)]=g,O[bZ(0x146)]('2d')[bZ(0x26c)](a4,0x0,0x0));let a5;if(j[bZ(0x12b)]&&!K&&N>0x0&&a1>=F-N&&O){const aa=(a1-(F-N)+0x1)/N,ab=P[bZ(0x146)]('2d');ab[bZ(0x115)]=0x1,ab[bZ(0x26c)](a4,0x0,0x0),ab[bZ(0x115)]=Math[bZ(0x1ea)](0x1,Math[bZ(0x2c4)](0x0,aa)),ab[bZ(0x26c)](O,0x0,0x0),ab[bZ(0x115)]=0x1;const ac=await createImageBitmap(P);a5=new VideoFrame(ac,{'timestamp':a1*0xf4240/k,'duration':0xf4240/k}),B[bZ(0x11c)](a5,{'keyFrame':a1%0xa===0x0}),a5[bZ(0x13b)](),ac[bZ(0x13b)](),a4[bZ(0x13b)]();}else a5=new VideoFrame(a4,{'timestamp':a1*0xf4240/k,'duration':0xf4240/k}),B[bZ(0x11c)](a5,{'keyFrame':a1%0xa===0x0}),a5[bZ(0x13b)](),a4[bZ(0x13b)]();try{let ad=0x0;while(typeof B[bZ(0x1d5)]===bZ(0xc7)&&B[bZ(0x1d5)]>0x4&&ad++<0xc8)await sleep(0x19);}catch(ae){}const a6=Math[bZ(0x2c6)]((a1+0x1)/F*0x64);$(bZ(0x17b))[bZ(0x1ad)]=a6,$(bZ(0x180))[bZ(0x35c)]=(a2/0x3e8)[bZ(0x30f)](0x1)+bZ(0x177)+l[bZ(0x30f)](0x1)+'s',$(bZ(0x341))[bZ(0x35c)]=bZ(0x2f1)+a6+bZ(0x11a)+(a1+0x1)+'/'+F+bZ(0x18d);}o=bZ(0x1b9),await B[bZ(0x398)](),B[bZ(0x13b)]();if(y)throw y;if(z)throw z;if(A===0x0)throw new Error(bZ(0x20b));o=bZ(0x2c8),x[bZ(0xc1)]();let Q=x[bZ(0x135)][bZ(0x29f)];if(!Q||Q[bZ(0x1b6)]<0x2710)throw new Error(bZ(0x29d)+(Q?Q[bZ(0x1b6)]:0x0)+bZ(0x251)+A+bZ(0x2d2));const R=renderFormat();let S=bZ(0x10d),T=bZ(0x1fc),U='';if(R===bZ(0x2f0)){const af=toMov(Q);af?(Q=af,S=bZ(0x220),T=bZ(0x2f0)):U=bZ(0x2e3);}lastFmt=T;const V=new Blob([Q],{'type':S});if(lastBlobUrl)URL[bZ(0x130)](lastBlobUrl);lastBlobUrl=URL[bZ(0x2cd)](V),lastFile=V;const X=renderFileName(f,g,k,T),Y=(Q[bZ(0x1b6)]/0x100000)[bZ(0x30f)](0x1);$(bZ(0x2ae))[bZ(0x12c)]=lastBlobUrl;const Z=$('dl');Z[bZ(0x12f)]=lastBlobUrl,Z[bZ(0xd1)]=X;const a0=$(bZ(0x2af));a0[bZ(0x35c)]=bZ(0x25c)+T[bZ(0x38a)]()+'\x20('+f+'x'+g+',\x20'+Y+bZ(0x32d),a0[bZ(0x39e)][bZ(0x1c4)](bZ(0x234)),$(bZ(0x374))[bZ(0x35c)]=X+bZ(0x316)+Y+bZ(0x1fa),$(bZ(0x374))[bZ(0x39e)][bZ(0x1c4)](bZ(0x234));if($(bZ(0x20d))[bZ(0xdf)])try{Z[bZ(0x191)]();}catch(ag){}$(bZ(0x341))[bZ(0x35c)]=bZ(0x15c)+X+'\x20('+Y+bZ(0x32d)+U+bZ(0x195);if(n[bZ(0x344)]&&currentUser){currentUser[bZ(0x36e)]=(currentUser[bZ(0x36e)]||0x0)+0x1;const ah=userDoc(currentUser[bZ(0x30b)]);ah&&(ah[bZ(0x36e)]=currentUser[bZ(0x36e)],saveUserDoc(currentUser[bZ(0x30b)],ah)),refreshAuthUI();}}catch(ai){console[bZ(0x1fe)](ai),$(bZ(0x341))[bZ(0x35c)]=bZ(0xf6)+o+bZ(0x18a)+errText(ai);}finally{try{if(p)await p[bZ(0x1db)]();}catch(aj){}exporting=![],$(bZ(0x2f2))[bZ(0x253)]=![],$(bZ(0x180))[bZ(0x35c)]=bZ(0x209);}}async function doShare(){const c4=al;if(!lastFile){$(c4(0x341))[c4(0x35c)]=c4(0x37e);return;}const c=c4(0x113)+(lastFmt||c4(0x1fc)),d=new File([lastFile],c,{'type':lastFmt===c4(0x2f0)?c4(0x220):c4(0x10d)});try{navigator[c4(0x2c7)]&&navigator[c4(0x2c7)]({'files':[d]})?(await navigator[c4(0x2e9)]({'files':[d],'title':SETTINGS[c4(0x2ab)]}),$(c4(0x341))[c4(0x35c)]=c4(0xcb)):$(c4(0x341))[c4(0x35c)]=c4(0x131);}catch(f){$(c4(0x341))[c4(0x35c)]=c4(0x254);}}function syncEditLabels(){const c5=al,c=editSettings();$(c5(0x1b4))[c5(0x35c)]=Number(c[c5(0x22b)][c5(0x30f)](0x2))+'×',$(c5(0x3a6))[c5(0x35c)]=Math[c5(0x2c6)](c[c5(0x298)]*0x64)+'%',$(c5(0x375))[c5(0x35c)]=c['dx']+'%',$(c5(0x16a))[c5(0x35c)]=c['dy']+'%',$(c5(0x23f))[c5(0x35c)]=c[c5(0x348)]+'px',$(c5(0x1ec))[c5(0x35c)]=Math[c5(0x2c6)](c[c5(0x2fe)])+'%',fitPreview();}const EYE_SVG=al(0x1e3),EYE_OFF_SVG=al(0x226);async function generateWithAI(){const c6=al,c=$(c6(0xf2)),d=($(c6(0x25d))?$(c6(0x25d))[c6(0x1ad)]:'')[c6(0x2ce)](),f=(CONFIG[c6(0x38f)]||'')[c6(0x2ce)]();if(!f){if(c)c[c6(0x35c)]=c6(0x228);return;}if(!d){if(c)c[c6(0x35c)]=c6(0x343);return;}const g=$(c6(0x147));if(g)g[c6(0x253)]=!![];if(c)c[c6(0x35c)]=c6(0x3aa);try{const h=new AbortController(),i=setTimeout(()=>h[c6(0x279)](),0x15f90);let j,k;try{j=await fetch(f,{'method':c6(0x33a),'headers':{'Content-Type':c6(0x10b)},'body':JSON[c6(0x1a1)]({'prompt':d}),'signal':h[c6(0x36d)]}),k=await j[c6(0x2d7)]()[c6(0x167)](()=>({}));}finally{clearTimeout(i);}if(!j['ok'])throw new Error(k&&k[c6(0x1fe)]||c6(0x19f)+j[c6(0x341)]+')');const l=k&&k[c6(0x1af)]||'';if(!l||!/<(html|body|canvas|style|script)/i[c6(0x2a4)](l))throw new Error(c6(0x23d));$(c6(0x12c))[c6(0x1ad)]=l,updatePreview();if(c)c[c6(0x35c)]=c6(0x2a9);$(c6(0x341))[c6(0x35c)]=c6(0x350);}catch(m){const n=m&&m[c6(0x311)]===c6(0x17a)?c6(0x1a3):m&&m[c6(0x214)]?m[c6(0x214)]:String(m);if(c)c[c6(0x35c)]=c6(0x1d2)+n;}finally{if(g)g[c6(0x253)]=![];}}function bind(){const c7=al;$(c7(0x16d))&&($(c7(0x16d))[c7(0x1e5)]=()=>goToAuth(c7(0x28d))),document[c7(0x3a2)](c7(0x2d4))[c7(0x13c)](c=>{const c8=c7;c[c8(0x1e5)]=()=>selectAuthTab(c[c8(0xd0)][c8(0x108)]);}),$(c7(0x32b))&&($(c7(0x32b))[c7(0x1e5)]=()=>{const c9=c7;selectAuthTab(c9(0x28d)),$(c9(0x2ea))[c9(0x1aa)]({'behavior':c9(0x1b8)});}),$(c7(0x117))&&($(c7(0x117))[c7(0x1e5)]=()=>{const ca=c7;selectAuthTab(ca(0xd2)),$(ca(0x2ea))[ca(0x1aa)]({'behavior':ca(0x1b8)}),$(ca(0xfa))[ca(0x231)]();}),$(c7(0x2a7))[c7(0x1e5)]=doSignup,$(c7(0x2da))[c7(0x1e5)]=doLogin,$(c7(0x166))[c7(0x1e5)]=doLicense,$(c7(0x114))[c7(0x1e5)]=doForgotPassword,document[c7(0x3a2)](c7(0x260))[c7(0x13c)](c=>{const cb=c7;c[cb(0x1e5)]=()=>{const cc=cb,d=$(c[cc(0x287)](cc(0x27d)));if(!d)return;const e=d[cc(0x133)]===cc(0x39c);d[cc(0x133)]=e?cc(0x2f9):cc(0x39c),c[cc(0x206)]=e?EYE_OFF_SVG:EYE_SVG,c[cc(0x2c3)](cc(0x213),e?cc(0x100):cc(0x296));};}),$(c7(0x147))[c7(0x1e5)]=generateWithAI,$(c7(0x2fb))[c7(0x1e5)]=()=>{const cd=c7;$(cd(0x12c))[cd(0x1ad)]=defaultCode(),updatePreview(),$(cd(0x341))[cd(0x35c)]=cd(0x371);},$(c7(0x361))[c7(0x1e5)]=()=>{const ce=c7;$(ce(0x12c))[ce(0x1ad)]='',updatePreview();},$(c7(0x1a6))[c7(0x1e5)]=()=>$(c7(0x395))[c7(0x191)](),$(c7(0x395))[c7(0xc6)](c7(0x275),async c=>{const cf=c7,d=c[cf(0x135)][cf(0xcc)]&&c[cf(0x135)][cf(0xcc)][0x0];if(!d)return;$(cf(0x12c))[cf(0x1ad)]=await d[cf(0x2f9)](),updatePreview();}),$(c7(0x12c))[c7(0xc6)](c7(0x3a5),updatePreview),$(c7(0x1cb))[c7(0xc6)](c7(0x275),updatePreview),[c7(0x22b),c7(0x298),c7(0x284),c7(0x1b7),c7(0x348),c7(0x2fe)][c7(0x13c)](c=>{const cg=c7,d=$(c);if(d)d[cg(0xc6)](cg(0x3a5),syncEditLabels);}),$(c7(0x12b))&&$(c7(0x12b))[c7(0xc6)](c7(0x275),syncEditLabels),$(c7(0x33e))&&$(c7(0x33e))[c7(0xc6)](c7(0x275),syncRenderBtn),syncRenderBtn(),$(c7(0x224))[c7(0x1e5)]=()=>{const ch=c7,c=$(ch(0x141))[ch(0x39e)][ch(0xfd)](ch(0x234));$(ch(0x224))[ch(0x35c)]=c?ch(0x1ae):ch(0x2d9);},window[c7(0xc6)](c7(0x1a7),()=>{const ci=c7;if(!$(ci(0x158))[ci(0x39e)][ci(0x349)](ci(0x234)))fitPreview();}),$(c7(0x2f2))[c7(0x1e5)]=doExport,$(c7(0x101))[c7(0x1e5)]=c=>{const cj=c7;currentUser&&$(cj(0x158))[cj(0x39e)][cj(0x349)](cj(0x234))&&(c[cj(0x264)](),showView(cj(0x18e)));},$(c7(0x1d1))[c7(0x1e5)]=()=>{const ck=c7;showView(ck(0xfe)),setTimeout(()=>{const cl=ck,c=$(cl(0x2b0));if(c)c[cl(0x1aa)]({'behavior':cl(0x1b8)});},0x15e);},$(c7(0x23e))[c7(0x1e5)]=doShare,$(c7(0x2af))[c7(0x1e5)]=()=>{const cm=c7,c=$('dl');if(c[cm(0x12f)])try{c[cm(0x191)]();}catch(d){}else $(cm(0x341))[cm(0x35c)]=cm(0x332);},$(c7(0xc4))[c7(0xc6)](c7(0x275),updatePayAmount),$(c7(0x274))[c7(0x1e5)]=submitPayment,$(c7(0x237))[c7(0x1e5)]=saveSettingsFromForm,$(c7(0x2df))&&($(c7(0x2df))[c7(0x1e5)]=loadAdminUsers),$(c7(0x369))[c7(0x1e5)]=async()=>{const cn=c7;try{await navigator[cn(0x331)][cn(0x20a)]($(cn(0x397))[cn(0x1ad)]),$(cn(0x341))[cn(0x35c)]=cn(0x129);}catch(c){$(cn(0x397))[cn(0x28a)](),document[cn(0x290)](cn(0x378));}},syncEditLabels();}let _booted=![];async function boot(){const co=al;if(_booted)return;_booted=!![],bind();const c=await tryInitFirebase();if(c)await fbLoadSiteSettings();loadSession();if(FB&&FB[co(0xfe)])try{FB[co(0x35a)][co(0x2b4)](FB[co(0xfe)],async d=>{const cp=co;if(!d)return;const f=await fbGetUserDoc(d[cp(0x30b)]);if(f){const g=Demo[cp(0x364)]();g[d[cp(0x30b)]]=f,Demo[cp(0x2c1)](g);if(currentUser&&currentUser[cp(0x30b)]===d[cp(0x30b)])currentUser=Object[cp(0x144)]({'uid':d[cp(0x30b)]},f),refreshAuthUI();else{if(!currentUser){Demo[cp(0x1f3)]({'uid':d[cp(0x30b)]}),loadSession(),refreshAuthUI(),renderAll();if(!$(cp(0x158))[cp(0x39e)][cp(0x349)](cp(0x234)))fitPreview();}}}});}catch(d){}if(!c)$(co(0x12d))[co(0x39e)][co(0x1c4)](co(0x234));renderAll(),refreshAuthUI();if(!$(co(0x12c))[co(0x1ad)][co(0x2ce)]())$(co(0x12c))[co(0x1ad)]=defaultCode();updatePreview();if(currentUser)showView(co(0x18e));else showView(co(0xfe));}document[al(0xc6)](al(0x34b),boot);if(document[al(0x355)]!==al(0x2ec))boot();</script>
+
+<script>
+/* mp4-muxer v5.1.3 (inlined — CDN/internet charao export cholbe) */
+"use strict";
+var Mp4Muxer = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+  var __accessCheck = (obj, member, msg) => {
+    if (!member.has(obj))
+      throw TypeError("Cannot " + msg);
+  };
+  var __privateGet = (obj, member, getter) => {
+    __accessCheck(obj, member, "read from private field");
+    return getter ? getter.call(obj) : member.get(obj);
+  };
+  var __privateAdd = (obj, member, value) => {
+    if (member.has(obj))
+      throw TypeError("Cannot add the same private member more than once");
+    member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+  };
+  var __privateSet = (obj, member, value, setter) => {
+    __accessCheck(obj, member, "write to private field");
+    setter ? setter.call(obj, value) : member.set(obj, value);
+    return value;
+  };
+  var __privateWrapper = (obj, member, setter, getter) => ({
+    set _(value) {
+      __privateSet(obj, member, value, setter);
+    },
+    get _() {
+      return __privateGet(obj, member, getter);
+    }
+  });
+  var __privateMethod = (obj, member, method) => {
+    __accessCheck(obj, member, "access private method");
+    return method;
+  };
+
+  // src/index.ts
+  var src_exports = {};
+  __export(src_exports, {
+    ArrayBufferTarget: () => ArrayBufferTarget,
+    FileSystemWritableFileStreamTarget: () => FileSystemWritableFileStreamTarget,
+    Muxer: () => Muxer,
+    StreamTarget: () => StreamTarget
+  });
+
+  // src/misc.ts
+  var bytes = new Uint8Array(8);
+  var view = new DataView(bytes.buffer);
+  var u8 = (value) => {
+    return [(value % 256 + 256) % 256];
+  };
+  var u16 = (value) => {
+    view.setUint16(0, value, false);
+    return [bytes[0], bytes[1]];
+  };
+  var i16 = (value) => {
+    view.setInt16(0, value, false);
+    return [bytes[0], bytes[1]];
+  };
+  var u24 = (value) => {
+    view.setUint32(0, value, false);
+    return [bytes[1], bytes[2], bytes[3]];
+  };
+  var u32 = (value) => {
+    view.setUint32(0, value, false);
+    return [bytes[0], bytes[1], bytes[2], bytes[3]];
+  };
+  var i32 = (value) => {
+    view.setInt32(0, value, false);
+    return [bytes[0], bytes[1], bytes[2], bytes[3]];
+  };
+  var u64 = (value) => {
+    view.setUint32(0, Math.floor(value / 2 ** 32), false);
+    view.setUint32(4, value, false);
+    return [bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]];
+  };
+  var fixed_8_8 = (value) => {
+    view.setInt16(0, 2 ** 8 * value, false);
+    return [bytes[0], bytes[1]];
+  };
+  var fixed_16_16 = (value) => {
+    view.setInt32(0, 2 ** 16 * value, false);
+    return [bytes[0], bytes[1], bytes[2], bytes[3]];
+  };
+  var fixed_2_30 = (value) => {
+    view.setInt32(0, 2 ** 30 * value, false);
+    return [bytes[0], bytes[1], bytes[2], bytes[3]];
+  };
+  var ascii = (text, nullTerminated = false) => {
+    let bytes2 = Array(text.length).fill(null).map((_, i) => text.charCodeAt(i));
+    if (nullTerminated)
+      bytes2.push(0);
+    return bytes2;
+  };
+  var last = (arr) => {
+    return arr && arr[arr.length - 1];
+  };
+  var lastPresentedSample = (samples) => {
+    let result = void 0;
+    for (let sample of samples) {
+      if (!result || sample.presentationTimestamp > result.presentationTimestamp) {
+        result = sample;
+      }
+    }
+    return result;
+  };
+  var intoTimescale = (timeInSeconds, timescale, round = true) => {
+    let value = timeInSeconds * timescale;
+    return round ? Math.round(value) : value;
+  };
+  var rotationMatrix = (rotationInDegrees) => {
+    let theta = rotationInDegrees * (Math.PI / 180);
+    let cosTheta = Math.cos(theta);
+    let sinTheta = Math.sin(theta);
+    return [
+      cosTheta,
+      sinTheta,
+      0,
+      -sinTheta,
+      cosTheta,
+      0,
+      0,
+      0,
+      1
+    ];
+  };
+  var IDENTITY_MATRIX = rotationMatrix(0);
+  var matrixToBytes = (matrix) => {
+    return [
+      fixed_16_16(matrix[0]),
+      fixed_16_16(matrix[1]),
+      fixed_2_30(matrix[2]),
+      fixed_16_16(matrix[3]),
+      fixed_16_16(matrix[4]),
+      fixed_2_30(matrix[5]),
+      fixed_16_16(matrix[6]),
+      fixed_16_16(matrix[7]),
+      fixed_2_30(matrix[8])
+    ];
+  };
+  var deepClone = (x) => {
+    if (!x)
+      return x;
+    if (typeof x !== "object")
+      return x;
+    if (Array.isArray(x))
+      return x.map(deepClone);
+    return Object.fromEntries(Object.entries(x).map(([key, value]) => [key, deepClone(value)]));
+  };
+  var isU32 = (value) => {
+    return value >= 0 && value < 2 ** 32;
+  };
+
+  // src/box.ts
+  var box = (type, contents, children) => ({
+    type,
+    contents: contents && new Uint8Array(contents.flat(10)),
+    children
+  });
+  var fullBox = (type, version, flags, contents, children) => box(
+    type,
+    [u8(version), u24(flags), contents ?? []],
+    children
+  );
+  var ftyp = (details) => {
+    let minorVersion = 512;
+    if (details.fragmented)
+      return box("ftyp", [
+        ascii("iso5"),
+        // Major brand
+        u32(minorVersion),
+        // Minor version
+        // Compatible brands
+        ascii("iso5"),
+        ascii("iso6"),
+        ascii("mp41")
+      ]);
+    return box("ftyp", [
+      ascii("isom"),
+      // Major brand
+      u32(minorVersion),
+      // Minor version
+      // Compatible brands
+      ascii("isom"),
+      details.holdsAvc ? ascii("avc1") : [],
+      ascii("mp41")
+    ]);
+  };
+  var mdat = (reserveLargeSize) => ({ type: "mdat", largeSize: reserveLargeSize });
+  var free = (size) => ({ type: "free", size });
+  var moov = (tracks, creationTime, fragmented = false) => box("moov", null, [
+    mvhd(creationTime, tracks),
+    ...tracks.map((x) => trak(x, creationTime)),
+    fragmented ? mvex(tracks) : null
+  ]);
+  var mvhd = (creationTime, tracks) => {
+    let duration = intoTimescale(Math.max(
+      0,
+      ...tracks.filter((x) => x.samples.length > 0).map((x) => {
+        const lastSample = lastPresentedSample(x.samples);
+        return lastSample.presentationTimestamp + lastSample.duration;
+      })
+    ), GLOBAL_TIMESCALE);
+    let nextTrackId = Math.max(...tracks.map((x) => x.id)) + 1;
+    let needsU64 = !isU32(creationTime) || !isU32(duration);
+    let u32OrU64 = needsU64 ? u64 : u32;
+    return fullBox("mvhd", +needsU64, 0, [
+      u32OrU64(creationTime),
+      // Creation time
+      u32OrU64(creationTime),
+      // Modification time
+      u32(GLOBAL_TIMESCALE),
+      // Timescale
+      u32OrU64(duration),
+      // Duration
+      fixed_16_16(1),
+      // Preferred rate
+      fixed_8_8(1),
+      // Preferred volume
+      Array(10).fill(0),
+      // Reserved
+      matrixToBytes(IDENTITY_MATRIX),
+      // Matrix
+      Array(24).fill(0),
+      // Pre-defined
+      u32(nextTrackId)
+      // Next track ID
+    ]);
+  };
+  var trak = (track, creationTime) => box("trak", null, [
+    tkhd(track, creationTime),
+    mdia(track, creationTime)
+  ]);
+  var tkhd = (track, creationTime) => {
+    let lastSample = lastPresentedSample(track.samples);
+    let durationInGlobalTimescale = intoTimescale(
+      lastSample ? lastSample.presentationTimestamp + lastSample.duration : 0,
+      GLOBAL_TIMESCALE
+    );
+    let needsU64 = !isU32(creationTime) || !isU32(durationInGlobalTimescale);
+    let u32OrU64 = needsU64 ? u64 : u32;
+    let matrix;
+    if (track.info.type === "video") {
+      matrix = typeof track.info.rotation === "number" ? rotationMatrix(track.info.rotation) : track.info.rotation;
+    } else {
+      matrix = IDENTITY_MATRIX;
+    }
+    return fullBox("tkhd", +needsU64, 3, [
+      u32OrU64(creationTime),
+      // Creation time
+      u32OrU64(creationTime),
+      // Modification time
+      u32(track.id),
+      // Track ID
+      u32(0),
+      // Reserved
+      u32OrU64(durationInGlobalTimescale),
+      // Duration
+      Array(8).fill(0),
+      // Reserved
+      u16(0),
+      // Layer
+      u16(0),
+      // Alternate group
+      fixed_8_8(track.info.type === "audio" ? 1 : 0),
+      // Volume
+      u16(0),
+      // Reserved
+      matrixToBytes(matrix),
+      // Matrix
+      fixed_16_16(track.info.type === "video" ? track.info.width : 0),
+      // Track width
+      fixed_16_16(track.info.type === "video" ? track.info.height : 0)
+      // Track height
+    ]);
+  };
+  var mdia = (track, creationTime) => box("mdia", null, [
+    mdhd(track, creationTime),
+    hdlr(track.info.type === "video" ? "vide" : "soun"),
+    minf(track)
+  ]);
+  var mdhd = (track, creationTime) => {
+    let lastSample = lastPresentedSample(track.samples);
+    let localDuration = intoTimescale(
+      lastSample ? lastSample.presentationTimestamp + lastSample.duration : 0,
+      track.timescale
+    );
+    let needsU64 = !isU32(creationTime) || !isU32(localDuration);
+    let u32OrU64 = needsU64 ? u64 : u32;
+    return fullBox("mdhd", +needsU64, 0, [
+      u32OrU64(creationTime),
+      // Creation time
+      u32OrU64(creationTime),
+      // Modification time
+      u32(track.timescale),
+      // Timescale
+      u32OrU64(localDuration),
+      // Duration
+      u16(21956),
+      // Language ("und", undetermined)
+      u16(0)
+      // Quality
+    ]);
+  };
+  var hdlr = (componentSubtype) => fullBox("hdlr", 0, 0, [
+    ascii("mhlr"),
+    // Component type
+    ascii(componentSubtype),
+    // Component subtype
+    u32(0),
+    // Component manufacturer
+    u32(0),
+    // Component flags
+    u32(0),
+    // Component flags mask
+    ascii("mp4-muxer-hdlr", true)
+    // Component name
+  ]);
+  var minf = (track) => box("minf", null, [
+    track.info.type === "video" ? vmhd() : smhd(),
+    dinf(),
+    stbl(track)
+  ]);
+  var vmhd = () => fullBox("vmhd", 0, 1, [
+    u16(0),
+    // Graphics mode
+    u16(0),
+    // Opcolor R
+    u16(0),
+    // Opcolor G
+    u16(0)
+    // Opcolor B
+  ]);
+  var smhd = () => fullBox("smhd", 0, 0, [
+    u16(0),
+    // Balance
+    u16(0)
+    // Reserved
+  ]);
+  var dinf = () => box("dinf", null, [
+    dref()
+  ]);
+  var dref = () => fullBox("dref", 0, 0, [
+    u32(1)
+    // Entry count
+  ], [
+    url()
+  ]);
+  var url = () => fullBox("url ", 0, 1);
+  var stbl = (track) => {
+    const needsCtts = track.compositionTimeOffsetTable.length > 1 || track.compositionTimeOffsetTable.some((x) => x.sampleCompositionTimeOffset !== 0);
+    return box("stbl", null, [
+      stsd(track),
+      stts(track),
+      stss(track),
+      stsc(track),
+      stsz(track),
+      stco(track),
+      needsCtts ? ctts(track) : null
+    ]);
+  };
+  var stsd = (track) => fullBox("stsd", 0, 0, [
+    u32(1)
+    // Entry count
+  ], [
+    track.info.type === "video" ? videoSampleDescription(
+      VIDEO_CODEC_TO_BOX_NAME[track.info.codec],
+      track
+    ) : soundSampleDescription(
+      AUDIO_CODEC_TO_BOX_NAME[track.info.codec],
+      track
+    )
+  ]);
+  var videoSampleDescription = (compressionType, track) => box(compressionType, [
+    Array(6).fill(0),
+    // Reserved
+    u16(1),
+    // Data reference index
+    u16(0),
+    // Pre-defined
+    u16(0),
+    // Reserved
+    Array(12).fill(0),
+    // Pre-defined
+    u16(track.info.width),
+    // Width
+    u16(track.info.height),
+    // Height
+    u32(4718592),
+    // Horizontal resolution
+    u32(4718592),
+    // Vertical resolution
+    u32(0),
+    // Reserved
+    u16(1),
+    // Frame count
+    Array(32).fill(0),
+    // Compressor name
+    u16(24),
+    // Depth
+    i16(65535)
+    // Pre-defined
+  ], [
+    VIDEO_CODEC_TO_CONFIGURATION_BOX[track.info.codec](track)
+  ]);
+  var avcC = (track) => track.info.decoderConfig && box("avcC", [
+    // For AVC, description is an AVCDecoderConfigurationRecord, so nothing else to do here
+    ...new Uint8Array(track.info.decoderConfig.description)
+  ]);
+  var hvcC = (track) => track.info.decoderConfig && box("hvcC", [
+    // For HEVC, description is a HEVCDecoderConfigurationRecord, so nothing else to do here
+    ...new Uint8Array(track.info.decoderConfig.description)
+  ]);
+  var vpcC = (track) => {
+    if (!track.info.decoderConfig) {
+      return null;
+    }
+    let decoderConfig = track.info.decoderConfig;
+    if (!decoderConfig.colorSpace) {
+      throw new Error(`'colorSpace' is required in the decoder config for VP9.`);
+    }
+    let parts = decoderConfig.codec.split(".");
+    let profile = Number(parts[1]);
+    let level = Number(parts[2]);
+    let bitDepth = Number(parts[3]);
+    let chromaSubsampling = 0;
+    let thirdByte = (bitDepth << 4) + (chromaSubsampling << 1) + Number(decoderConfig.colorSpace.fullRange);
+    let colourPrimaries = 2;
+    let transferCharacteristics = 2;
+    let matrixCoefficients = 2;
+    return fullBox("vpcC", 1, 0, [
+      u8(profile),
+      // Profile
+      u8(level),
+      // Level
+      u8(thirdByte),
+      // Bit depth, chroma subsampling, full range
+      u8(colourPrimaries),
+      // Colour primaries
+      u8(transferCharacteristics),
+      // Transfer characteristics
+      u8(matrixCoefficients),
+      // Matrix coefficients
+      u16(0)
+      // Codec initialization data size
+    ]);
+  };
+  var av1C = () => {
+    let marker = 1;
+    let version = 1;
+    let firstByte = (marker << 7) + version;
+    return box("av1C", [
+      firstByte,
+      0,
+      0,
+      0
+    ]);
+  };
+  var soundSampleDescription = (compressionType, track) => box(compressionType, [
+    Array(6).fill(0),
+    // Reserved
+    u16(1),
+    // Data reference index
+    u16(0),
+    // Version
+    u16(0),
+    // Revision level
+    u32(0),
+    // Vendor
+    u16(track.info.numberOfChannels),
+    // Number of channels
+    u16(16),
+    // Sample size (bits)
+    u16(0),
+    // Compression ID
+    u16(0),
+    // Packet size
+    fixed_16_16(track.info.sampleRate)
+    // Sample rate
+  ], [
+    AUDIO_CODEC_TO_CONFIGURATION_BOX[track.info.codec](track)
+  ]);
+  var esds = (track) => {
+    let description = new Uint8Array(track.info.decoderConfig.description);
+    return fullBox("esds", 0, 0, [
+      // https://stackoverflow.com/a/54803118
+      u32(58753152),
+      // TAG(3) = Object Descriptor ([2])
+      u8(32 + description.byteLength),
+      // length of this OD (which includes the next 2 tags)
+      u16(1),
+      // ES_ID = 1
+      u8(0),
+      // flags etc = 0
+      u32(75530368),
+      // TAG(4) = ES Descriptor ([2]) embedded in above OD
+      u8(18 + description.byteLength),
+      // length of this ESD
+      u8(64),
+      // MPEG-4 Audio
+      u8(21),
+      // stream type(6bits)=5 audio, flags(2bits)=1
+      u24(0),
+      // 24bit buffer size
+      u32(130071),
+      // max bitrate
+      u32(130071),
+      // avg bitrate
+      u32(92307584),
+      // TAG(5) = ASC ([2],[3]) embedded in above OD
+      u8(description.byteLength),
+      // length
+      ...description,
+      u32(109084800),
+      // TAG(6)
+      u8(1),
+      // length
+      u8(2)
+      // data
+    ]);
+  };
+  var dOps = (track) => {
+    let preskip = 3840;
+    let gain = 0;
+    const description = track.info.decoderConfig?.description;
+    if (description) {
+      if (description.byteLength < 18) {
+        throw new TypeError("Invalid decoder description provided for Opus; must be at least 18 bytes long.");
+      }
+      const view2 = ArrayBuffer.isView(description) ? new DataView(description.buffer, description.byteOffset, description.byteLength) : new DataView(description);
+      preskip = view2.getUint16(10, true);
+      gain = view2.getInt16(14, true);
+    }
+    return box("dOps", [
+      u8(0),
+      // Version
+      u8(track.info.numberOfChannels),
+      // OutputChannelCount
+      u16(preskip),
+      u32(track.info.sampleRate),
+      // InputSampleRate
+      fixed_8_8(gain),
+      // OutputGain
+      u8(0)
+      // ChannelMappingFamily
+    ]);
+  };
+  var stts = (track) => {
+    return fullBox("stts", 0, 0, [
+      u32(track.timeToSampleTable.length),
+      // Number of entries
+      track.timeToSampleTable.map((x) => [
+        // Time-to-sample table
+        u32(x.sampleCount),
+        // Sample count
+        u32(x.sampleDelta)
+        // Sample duration
+      ])
+    ]);
+  };
+  var stss = (track) => {
+    if (track.samples.every((x) => x.type === "key"))
+      return null;
+    let keySamples = [...track.samples.entries()].filter(([, sample]) => sample.type === "key");
+    return fullBox("stss", 0, 0, [
+      u32(keySamples.length),
+      // Number of entries
+      keySamples.map(([index]) => u32(index + 1))
+      // Sync sample table
+    ]);
+  };
+  var stsc = (track) => {
+    return fullBox("stsc", 0, 0, [
+      u32(track.compactlyCodedChunkTable.length),
+      // Number of entries
+      track.compactlyCodedChunkTable.map((x) => [
+        // Sample-to-chunk table
+        u32(x.firstChunk),
+        // First chunk
+        u32(x.samplesPerChunk),
+        // Samples per chunk
+        u32(1)
+        // Sample description index
+      ])
+    ]);
+  };
+  var stsz = (track) => fullBox("stsz", 0, 0, [
+    u32(0),
+    // Sample size (0 means non-constant size)
+    u32(track.samples.length),
+    // Number of entries
+    track.samples.map((x) => u32(x.size))
+    // Sample size table
+  ]);
+  var stco = (track) => {
+    if (track.finalizedChunks.length > 0 && last(track.finalizedChunks).offset >= 2 ** 32) {
+      return fullBox("co64", 0, 0, [
+        u32(track.finalizedChunks.length),
+        // Number of entries
+        track.finalizedChunks.map((x) => u64(x.offset))
+        // Chunk offset table
+      ]);
+    }
+    return fullBox("stco", 0, 0, [
+      u32(track.finalizedChunks.length),
+      // Number of entries
+      track.finalizedChunks.map((x) => u32(x.offset))
+      // Chunk offset table
+    ]);
+  };
+  var ctts = (track) => {
+    return fullBox("ctts", 0, 0, [
+      u32(track.compositionTimeOffsetTable.length),
+      // Number of entries
+      track.compositionTimeOffsetTable.map((x) => [
+        // Time-to-sample table
+        u32(x.sampleCount),
+        // Sample count
+        u32(x.sampleCompositionTimeOffset)
+        // Sample offset
+      ])
+    ]);
+  };
+  var mvex = (tracks) => {
+    return box("mvex", null, tracks.map(trex));
+  };
+  var trex = (track) => {
+    return fullBox("trex", 0, 0, [
+      u32(track.id),
+      // Track ID
+      u32(1),
+      // Default sample description index
+      u32(0),
+      // Default sample duration
+      u32(0),
+      // Default sample size
+      u32(0)
+      // Default sample flags
+    ]);
+  };
+  var moof = (sequenceNumber, tracks) => {
+    return box("moof", null, [
+      mfhd(sequenceNumber),
+      ...tracks.map(traf)
+    ]);
+  };
+  var mfhd = (sequenceNumber) => {
+    return fullBox("mfhd", 0, 0, [
+      u32(sequenceNumber)
+      // Sequence number
+    ]);
+  };
+  var fragmentSampleFlags = (sample) => {
+    let byte1 = 0;
+    let byte2 = 0;
+    let byte3 = 0;
+    let byte4 = 0;
+    let sampleIsDifferenceSample = sample.type === "delta";
+    byte2 |= +sampleIsDifferenceSample;
+    if (sampleIsDifferenceSample) {
+      byte1 |= 1;
+    } else {
+      byte1 |= 2;
+    }
+    return byte1 << 24 | byte2 << 16 | byte3 << 8 | byte4;
+  };
+  var traf = (track) => {
+    return box("traf", null, [
+      tfhd(track),
+      tfdt(track),
+      trun(track)
+    ]);
+  };
+  var tfhd = (track) => {
+    let tfFlags = 0;
+    tfFlags |= 8;
+    tfFlags |= 16;
+    tfFlags |= 32;
+    tfFlags |= 131072;
+    let referenceSample = track.currentChunk.samples[1] ?? track.currentChunk.samples[0];
+    let referenceSampleInfo = {
+      duration: referenceSample.timescaleUnitsToNextSample,
+      size: referenceSample.size,
+      flags: fragmentSampleFlags(referenceSample)
+    };
+    return fullBox("tfhd", 0, tfFlags, [
+      u32(track.id),
+      // Track ID
+      u32(referenceSampleInfo.duration),
+      // Default sample duration
+      u32(referenceSampleInfo.size),
+      // Default sample size
+      u32(referenceSampleInfo.flags)
+      // Default sample flags
+    ]);
+  };
+  var tfdt = (track) => {
+    return fullBox("tfdt", 1, 0, [
+      u64(intoTimescale(track.currentChunk.startTimestamp, track.timescale))
+      // Base Media Decode Time
+    ]);
+  };
+  var trun = (track) => {
+    let allSampleDurations = track.currentChunk.samples.map((x) => x.timescaleUnitsToNextSample);
+    let allSampleSizes = track.currentChunk.samples.map((x) => x.size);
+    let allSampleFlags = track.currentChunk.samples.map(fragmentSampleFlags);
+    let allSampleCompositionTimeOffsets = track.currentChunk.samples.map((x) => intoTimescale(x.presentationTimestamp - x.decodeTimestamp, track.timescale));
+    let uniqueSampleDurations = new Set(allSampleDurations);
+    let uniqueSampleSizes = new Set(allSampleSizes);
+    let uniqueSampleFlags = new Set(allSampleFlags);
+    let uniqueSampleCompositionTimeOffsets = new Set(allSampleCompositionTimeOffsets);
+    let firstSampleFlagsPresent = uniqueSampleFlags.size === 2 && allSampleFlags[0] !== allSampleFlags[1];
+    let sampleDurationPresent = uniqueSampleDurations.size > 1;
+    let sampleSizePresent = uniqueSampleSizes.size > 1;
+    let sampleFlagsPresent = !firstSampleFlagsPresent && uniqueSampleFlags.size > 1;
+    let sampleCompositionTimeOffsetsPresent = uniqueSampleCompositionTimeOffsets.size > 1 || [...uniqueSampleCompositionTimeOffsets].some((x) => x !== 0);
+    let flags = 0;
+    flags |= 1;
+    flags |= 4 * +firstSampleFlagsPresent;
+    flags |= 256 * +sampleDurationPresent;
+    flags |= 512 * +sampleSizePresent;
+    flags |= 1024 * +sampleFlagsPresent;
+    flags |= 2048 * +sampleCompositionTimeOffsetsPresent;
+    return fullBox("trun", 1, flags, [
+      u32(track.currentChunk.samples.length),
+      // Sample count
+      u32(track.currentChunk.offset - track.currentChunk.moofOffset || 0),
+      // Data offset
+      firstSampleFlagsPresent ? u32(allSampleFlags[0]) : [],
+      track.currentChunk.samples.map((_, i) => [
+        sampleDurationPresent ? u32(allSampleDurations[i]) : [],
+        // Sample duration
+        sampleSizePresent ? u32(allSampleSizes[i]) : [],
+        // Sample size
+        sampleFlagsPresent ? u32(allSampleFlags[i]) : [],
+        // Sample flags
+        // Sample composition time offsets
+        sampleCompositionTimeOffsetsPresent ? i32(allSampleCompositionTimeOffsets[i]) : []
+      ])
+    ]);
+  };
+  var mfra = (tracks) => {
+    return box("mfra", null, [
+      ...tracks.map(tfra),
+      mfro()
+    ]);
+  };
+  var tfra = (track, trackIndex) => {
+    let version = 1;
+    return fullBox("tfra", version, 0, [
+      u32(track.id),
+      // Track ID
+      u32(63),
+      // This specifies that traf number, trun number and sample number are 32-bit ints
+      u32(track.finalizedChunks.length),
+      // Number of entries
+      track.finalizedChunks.map((chunk) => [
+        u64(intoTimescale(chunk.startTimestamp, track.timescale)),
+        // Time
+        u64(chunk.moofOffset),
+        // moof offset
+        u32(trackIndex + 1),
+        // traf number
+        u32(1),
+        // trun number
+        u32(1)
+        // Sample number
+      ])
+    ]);
+  };
+  var mfro = () => {
+    return fullBox("mfro", 0, 0, [
+      // This value needs to be overwritten manually from the outside, where the actual size of the enclosing mfra box
+      // is known
+      u32(0)
+      // Size
+    ]);
+  };
+  var VIDEO_CODEC_TO_BOX_NAME = {
+    "avc": "avc1",
+    "hevc": "hvc1",
+    "vp9": "vp09",
+    "av1": "av01"
+  };
+  var VIDEO_CODEC_TO_CONFIGURATION_BOX = {
+    "avc": avcC,
+    "hevc": hvcC,
+    "vp9": vpcC,
+    "av1": av1C
+  };
+  var AUDIO_CODEC_TO_BOX_NAME = {
+    "aac": "mp4a",
+    "opus": "Opus"
+  };
+  var AUDIO_CODEC_TO_CONFIGURATION_BOX = {
+    "aac": esds,
+    "opus": dOps
+  };
+
+  // src/target.ts
+  var isTarget = Symbol("isTarget");
+  var Target = class {
+  };
+  isTarget;
+  var ArrayBufferTarget = class extends Target {
+    constructor() {
+      super(...arguments);
+      this.buffer = null;
+    }
+  };
+  var StreamTarget = class extends Target {
+    constructor(options) {
+      super();
+      this.options = options;
+      if (typeof options !== "object") {
+        throw new TypeError("StreamTarget requires an options object to be passed to its constructor.");
+      }
+      if (options.onData) {
+        if (typeof options.onData !== "function") {
+          throw new TypeError("options.onData, when provided, must be a function.");
+        }
+        if (options.onData.length < 2) {
+          throw new TypeError(
+            "options.onData, when provided, must be a function that takes in at least two arguments (data and position). Ignoring the position argument, which specifies the byte offset at which the data is to be written, can lead to broken outputs."
+          );
+        }
+      }
+      if (options.chunked !== void 0 && typeof options.chunked !== "boolean") {
+        throw new TypeError("options.chunked, when provided, must be a boolean.");
+      }
+      if (options.chunkSize !== void 0 && (!Number.isInteger(options.chunkSize) || options.chunkSize <= 0)) {
+        throw new TypeError("options.chunkSize, when provided, must be a positive integer.");
+      }
+    }
+  };
+  var FileSystemWritableFileStreamTarget = class extends Target {
+    constructor(stream, options) {
+      super();
+      this.stream = stream;
+      this.options = options;
+      if (!(stream instanceof FileSystemWritableFileStream)) {
+        throw new TypeError("FileSystemWritableFileStreamTarget requires a FileSystemWritableFileStream instance.");
+      }
+      if (options !== void 0 && typeof options !== "object") {
+        throw new TypeError("FileSystemWritableFileStreamTarget's options, when provided, must be an object.");
+      }
+      if (options) {
+        if (options.chunkSize !== void 0 && (!Number.isInteger(options.chunkSize) || options.chunkSize <= 0)) {
+          throw new TypeError("options.chunkSize, when provided, must be a positive integer");
+        }
+      }
+    }
+  };
+
+  // src/writer.ts
+  var _helper, _helperView;
+  var Writer = class {
+    constructor() {
+      this.pos = 0;
+      __privateAdd(this, _helper, new Uint8Array(8));
+      __privateAdd(this, _helperView, new DataView(__privateGet(this, _helper).buffer));
+      /**
+       * Stores the position from the start of the file to where boxes elements have been written. This is used to
+       * rewrite/edit elements that were already added before, and to measure sizes of things.
+       */
+      this.offsets = /* @__PURE__ */ new WeakMap();
+    }
+    /** Sets the current position for future writes to a new one. */
+    seek(newPos) {
+      this.pos = newPos;
+    }
+    writeU32(value) {
+      __privateGet(this, _helperView).setUint32(0, value, false);
+      this.write(__privateGet(this, _helper).subarray(0, 4));
+    }
+    writeU64(value) {
+      __privateGet(this, _helperView).setUint32(0, Math.floor(value / 2 ** 32), false);
+      __privateGet(this, _helperView).setUint32(4, value, false);
+      this.write(__privateGet(this, _helper).subarray(0, 8));
+    }
+    writeAscii(text) {
+      for (let i = 0; i < text.length; i++) {
+        __privateGet(this, _helperView).setUint8(i % 8, text.charCodeAt(i));
+        if (i % 8 === 7)
+          this.write(__privateGet(this, _helper));
+      }
+      if (text.length % 8 !== 0) {
+        this.write(__privateGet(this, _helper).subarray(0, text.length % 8));
+      }
+    }
+    writeBox(box2) {
+      this.offsets.set(box2, this.pos);
+      if (box2.contents && !box2.children) {
+        this.writeBoxHeader(box2, box2.size ?? box2.contents.byteLength + 8);
+        this.write(box2.contents);
+      } else {
+        let startPos = this.pos;
+        this.writeBoxHeader(box2, 0);
+        if (box2.contents)
+          this.write(box2.contents);
+        if (box2.children) {
+          for (let child of box2.children)
+            if (child)
+              this.writeBox(child);
+        }
+        let endPos = this.pos;
+        let size = box2.size ?? endPos - startPos;
+        this.seek(startPos);
+        this.writeBoxHeader(box2, size);
+        this.seek(endPos);
+      }
+    }
+    writeBoxHeader(box2, size) {
+      this.writeU32(box2.largeSize ? 1 : size);
+      this.writeAscii(box2.type);
+      if (box2.largeSize)
+        this.writeU64(size);
+    }
+    measureBoxHeader(box2) {
+      return 8 + (box2.largeSize ? 8 : 0);
+    }
+    patchBox(box2) {
+      let endPos = this.pos;
+      this.seek(this.offsets.get(box2));
+      this.writeBox(box2);
+      this.seek(endPos);
+    }
+    measureBox(box2) {
+      if (box2.contents && !box2.children) {
+        let headerSize = this.measureBoxHeader(box2);
+        return headerSize + box2.contents.byteLength;
+      } else {
+        let result = this.measureBoxHeader(box2);
+        if (box2.contents)
+          result += box2.contents.byteLength;
+        if (box2.children) {
+          for (let child of box2.children)
+            if (child)
+              result += this.measureBox(child);
+        }
+        return result;
+      }
+    }
+  };
+  _helper = new WeakMap();
+  _helperView = new WeakMap();
+  var _target, _buffer, _bytes, _maxPos, _ensureSize, ensureSize_fn;
+  var ArrayBufferTargetWriter = class extends Writer {
+    constructor(target) {
+      super();
+      __privateAdd(this, _ensureSize);
+      __privateAdd(this, _target, void 0);
+      __privateAdd(this, _buffer, new ArrayBuffer(2 ** 16));
+      __privateAdd(this, _bytes, new Uint8Array(__privateGet(this, _buffer)));
+      __privateAdd(this, _maxPos, 0);
+      __privateSet(this, _target, target);
+    }
+    write(data) {
+      __privateMethod(this, _ensureSize, ensureSize_fn).call(this, this.pos + data.byteLength);
+      __privateGet(this, _bytes).set(data, this.pos);
+      this.pos += data.byteLength;
+      __privateSet(this, _maxPos, Math.max(__privateGet(this, _maxPos), this.pos));
+    }
+    finalize() {
+      __privateMethod(this, _ensureSize, ensureSize_fn).call(this, this.pos);
+      __privateGet(this, _target).buffer = __privateGet(this, _buffer).slice(0, Math.max(__privateGet(this, _maxPos), this.pos));
+    }
+  };
+  _target = new WeakMap();
+  _buffer = new WeakMap();
+  _bytes = new WeakMap();
+  _maxPos = new WeakMap();
+  _ensureSize = new WeakSet();
+  ensureSize_fn = function(size) {
+    let newLength = __privateGet(this, _buffer).byteLength;
+    while (newLength < size)
+      newLength *= 2;
+    if (newLength === __privateGet(this, _buffer).byteLength)
+      return;
+    let newBuffer = new ArrayBuffer(newLength);
+    let newBytes = new Uint8Array(newBuffer);
+    newBytes.set(__privateGet(this, _bytes), 0);
+    __privateSet(this, _buffer, newBuffer);
+    __privateSet(this, _bytes, newBytes);
+  };
+  var _target2, _sections;
+  var StreamTargetWriter = class extends Writer {
+    constructor(target) {
+      super();
+      __privateAdd(this, _target2, void 0);
+      __privateAdd(this, _sections, []);
+      __privateSet(this, _target2, target);
+    }
+    write(data) {
+      __privateGet(this, _sections).push({
+        data: data.slice(),
+        start: this.pos
+      });
+      this.pos += data.byteLength;
+    }
+    flush() {
+      if (__privateGet(this, _sections).length === 0)
+        return;
+      let chunks = [];
+      let sorted = [...__privateGet(this, _sections)].sort((a, b) => a.start - b.start);
+      chunks.push({
+        start: sorted[0].start,
+        size: sorted[0].data.byteLength
+      });
+      for (let i = 1; i < sorted.length; i++) {
+        let lastChunk = chunks[chunks.length - 1];
+        let section = sorted[i];
+        if (section.start <= lastChunk.start + lastChunk.size) {
+          lastChunk.size = Math.max(lastChunk.size, section.start + section.data.byteLength - lastChunk.start);
+        } else {
+          chunks.push({
+            start: section.start,
+            size: section.data.byteLength
+          });
+        }
+      }
+      for (let chunk of chunks) {
+        chunk.data = new Uint8Array(chunk.size);
+        for (let section of __privateGet(this, _sections)) {
+          if (chunk.start <= section.start && section.start < chunk.start + chunk.size) {
+            chunk.data.set(section.data, section.start - chunk.start);
+          }
+        }
+        __privateGet(this, _target2).options.onData?.(chunk.data, chunk.start);
+      }
+      __privateGet(this, _sections).length = 0;
+    }
+    finalize() {
+    }
+  };
+  _target2 = new WeakMap();
+  _sections = new WeakMap();
+  var DEFAULT_CHUNK_SIZE = 2 ** 24;
+  var MAX_CHUNKS_AT_ONCE = 2;
+  var _target3, _chunkSize, _chunks, _writeDataIntoChunks, writeDataIntoChunks_fn, _insertSectionIntoChunk, insertSectionIntoChunk_fn, _createChunk, createChunk_fn, _flushChunks, flushChunks_fn;
+  var ChunkedStreamTargetWriter = class extends Writer {
+    constructor(target) {
+      super();
+      __privateAdd(this, _writeDataIntoChunks);
+      __privateAdd(this, _insertSectionIntoChunk);
+      __privateAdd(this, _createChunk);
+      __privateAdd(this, _flushChunks);
+      __privateAdd(this, _target3, void 0);
+      __privateAdd(this, _chunkSize, void 0);
+      /**
+       * The data is divided up into fixed-size chunks, whose contents are first filled in RAM and then flushed out.
+       * A chunk is flushed if all of its contents have been written.
+       */
+      __privateAdd(this, _chunks, []);
+      __privateSet(this, _target3, target);
+      __privateSet(this, _chunkSize, target.options?.chunkSize ?? DEFAULT_CHUNK_SIZE);
+      if (!Number.isInteger(__privateGet(this, _chunkSize)) || __privateGet(this, _chunkSize) < 2 ** 10) {
+        throw new Error("Invalid StreamTarget options: chunkSize must be an integer not smaller than 1024.");
+      }
+    }
+    write(data) {
+      __privateMethod(this, _writeDataIntoChunks, writeDataIntoChunks_fn).call(this, data, this.pos);
+      __privateMethod(this, _flushChunks, flushChunks_fn).call(this);
+      this.pos += data.byteLength;
+    }
+    finalize() {
+      __privateMethod(this, _flushChunks, flushChunks_fn).call(this, true);
+    }
+  };
+  _target3 = new WeakMap();
+  _chunkSize = new WeakMap();
+  _chunks = new WeakMap();
+  _writeDataIntoChunks = new WeakSet();
+  writeDataIntoChunks_fn = function(data, position) {
+    let chunkIndex = __privateGet(this, _chunks).findIndex((x) => x.start <= position && position < x.start + __privateGet(this, _chunkSize));
+    if (chunkIndex === -1)
+      chunkIndex = __privateMethod(this, _createChunk, createChunk_fn).call(this, position);
+    let chunk = __privateGet(this, _chunks)[chunkIndex];
+    let relativePosition = position - chunk.start;
+    let toWrite = data.subarray(0, Math.min(__privateGet(this, _chunkSize) - relativePosition, data.byteLength));
+    chunk.data.set(toWrite, relativePosition);
+    let section = {
+      start: relativePosition,
+      end: relativePosition + toWrite.byteLength
+    };
+    __privateMethod(this, _insertSectionIntoChunk, insertSectionIntoChunk_fn).call(this, chunk, section);
+    if (chunk.written[0].start === 0 && chunk.written[0].end === __privateGet(this, _chunkSize)) {
+      chunk.shouldFlush = true;
+    }
+    if (__privateGet(this, _chunks).length > MAX_CHUNKS_AT_ONCE) {
+      for (let i = 0; i < __privateGet(this, _chunks).length - 1; i++) {
+        __privateGet(this, _chunks)[i].shouldFlush = true;
+      }
+      __privateMethod(this, _flushChunks, flushChunks_fn).call(this);
+    }
+    if (toWrite.byteLength < data.byteLength) {
+      __privateMethod(this, _writeDataIntoChunks, writeDataIntoChunks_fn).call(this, data.subarray(toWrite.byteLength), position + toWrite.byteLength);
+    }
+  };
+  _insertSectionIntoChunk = new WeakSet();
+  insertSectionIntoChunk_fn = function(chunk, section) {
+    let low = 0;
+    let high = chunk.written.length - 1;
+    let index = -1;
+    while (low <= high) {
+      let mid = Math.floor(low + (high - low + 1) / 2);
+      if (chunk.written[mid].start <= section.start) {
+        low = mid + 1;
+        index = mid;
+      } else {
+        high = mid - 1;
+      }
+    }
+    chunk.written.splice(index + 1, 0, section);
+    if (index === -1 || chunk.written[index].end < section.start)
+      index++;
+    while (index < chunk.written.length - 1 && chunk.written[index].end >= chunk.written[index + 1].start) {
+      chunk.written[index].end = Math.max(chunk.written[index].end, chunk.written[index + 1].end);
+      chunk.written.splice(index + 1, 1);
+    }
+  };
+  _createChunk = new WeakSet();
+  createChunk_fn = function(includesPosition) {
+    let start = Math.floor(includesPosition / __privateGet(this, _chunkSize)) * __privateGet(this, _chunkSize);
+    let chunk = {
+      start,
+      data: new Uint8Array(__privateGet(this, _chunkSize)),
+      written: [],
+      shouldFlush: false
+    };
+    __privateGet(this, _chunks).push(chunk);
+    __privateGet(this, _chunks).sort((a, b) => a.start - b.start);
+    return __privateGet(this, _chunks).indexOf(chunk);
+  };
+  _flushChunks = new WeakSet();
+  flushChunks_fn = function(force = false) {
+    for (let i = 0; i < __privateGet(this, _chunks).length; i++) {
+      let chunk = __privateGet(this, _chunks)[i];
+      if (!chunk.shouldFlush && !force)
+        continue;
+      for (let section of chunk.written) {
+        __privateGet(this, _target3).options.onData?.(
+          chunk.data.subarray(section.start, section.end),
+          chunk.start + section.start
+        );
+      }
+      __privateGet(this, _chunks).splice(i--, 1);
+    }
+  };
+  var FileSystemWritableFileStreamTargetWriter = class extends ChunkedStreamTargetWriter {
+    constructor(target) {
+      super(new StreamTarget({
+        onData: (data, position) => target.stream.write({
+          type: "write",
+          data,
+          position
+        }),
+        chunkSize: target.options?.chunkSize
+      }));
+    }
+  };
+
+  // src/muxer.ts
+  var GLOBAL_TIMESCALE = 1e3;
+  var SUPPORTED_VIDEO_CODECS = ["avc", "hevc", "vp9", "av1"];
+  var SUPPORTED_AUDIO_CODECS = ["aac", "opus"];
+  var TIMESTAMP_OFFSET = 2082844800;
+  var FIRST_TIMESTAMP_BEHAVIORS = ["strict", "offset", "cross-track-offset"];
+  var _options, _writer, _ftypSize, _mdat, _videoTrack, _audioTrack, _creationTime, _finalizedChunks, _nextFragmentNumber, _videoSampleQueue, _audioSampleQueue, _finalized, _validateOptions, validateOptions_fn, _writeHeader, writeHeader_fn, _computeMoovSizeUpperBound, computeMoovSizeUpperBound_fn, _prepareTracks, prepareTracks_fn, _generateMpeg4AudioSpecificConfig, generateMpeg4AudioSpecificConfig_fn, _createSampleForTrack, createSampleForTrack_fn, _addSampleToTrack, addSampleToTrack_fn, _validateTimestamp, validateTimestamp_fn, _finalizeCurrentChunk, finalizeCurrentChunk_fn, _finalizeFragment, finalizeFragment_fn, _maybeFlushStreamingTargetWriter, maybeFlushStreamingTargetWriter_fn, _ensureNotFinalized, ensureNotFinalized_fn;
+  var Muxer = class {
+    constructor(options) {
+      __privateAdd(this, _validateOptions);
+      __privateAdd(this, _writeHeader);
+      __privateAdd(this, _computeMoovSizeUpperBound);
+      __privateAdd(this, _prepareTracks);
+      // https://wiki.multimedia.cx/index.php/MPEG-4_Audio
+      __privateAdd(this, _generateMpeg4AudioSpecificConfig);
+      __privateAdd(this, _createSampleForTrack);
+      __privateAdd(this, _addSampleToTrack);
+      __privateAdd(this, _validateTimestamp);
+      __privateAdd(this, _finalizeCurrentChunk);
+      __privateAdd(this, _finalizeFragment);
+      __privateAdd(this, _maybeFlushStreamingTargetWriter);
+      __privateAdd(this, _ensureNotFinalized);
+      __privateAdd(this, _options, void 0);
+      __privateAdd(this, _writer, void 0);
+      __privateAdd(this, _ftypSize, void 0);
+      __privateAdd(this, _mdat, void 0);
+      __privateAdd(this, _videoTrack, null);
+      __privateAdd(this, _audioTrack, null);
+      __privateAdd(this, _creationTime, Math.floor(Date.now() / 1e3) + TIMESTAMP_OFFSET);
+      __privateAdd(this, _finalizedChunks, []);
+      // Fields for fragmented MP4:
+      __privateAdd(this, _nextFragmentNumber, 1);
+      __privateAdd(this, _videoSampleQueue, []);
+      __privateAdd(this, _audioSampleQueue, []);
+      __privateAdd(this, _finalized, false);
+      __privateMethod(this, _validateOptions, validateOptions_fn).call(this, options);
+      options.video = deepClone(options.video);
+      options.audio = deepClone(options.audio);
+      options.fastStart = deepClone(options.fastStart);
+      this.target = options.target;
+      __privateSet(this, _options, {
+        firstTimestampBehavior: "strict",
+        ...options
+      });
+      if (options.target instanceof ArrayBufferTarget) {
+        __privateSet(this, _writer, new ArrayBufferTargetWriter(options.target));
+      } else if (options.target instanceof StreamTarget) {
+        __privateSet(this, _writer, options.target.options?.chunked ? new ChunkedStreamTargetWriter(options.target) : new StreamTargetWriter(options.target));
+      } else if (options.target instanceof FileSystemWritableFileStreamTarget) {
+        __privateSet(this, _writer, new FileSystemWritableFileStreamTargetWriter(options.target));
+      } else {
+        throw new Error(`Invalid target: ${options.target}`);
+      }
+      __privateMethod(this, _prepareTracks, prepareTracks_fn).call(this);
+      __privateMethod(this, _writeHeader, writeHeader_fn).call(this);
+    }
+    addVideoChunk(sample, meta, timestamp, compositionTimeOffset) {
+      if (!(sample instanceof EncodedVideoChunk)) {
+        throw new TypeError("addVideoChunk's first argument (sample) must be of type EncodedVideoChunk.");
+      }
+      if (meta && typeof meta !== "object") {
+        throw new TypeError("addVideoChunk's second argument (meta), when provided, must be an object.");
+      }
+      if (timestamp !== void 0 && (!Number.isFinite(timestamp) || timestamp < 0)) {
+        throw new TypeError(
+          "addVideoChunk's third argument (timestamp), when provided, must be a non-negative real number."
+        );
+      }
+      if (compositionTimeOffset !== void 0 && !Number.isFinite(compositionTimeOffset)) {
+        throw new TypeError(
+          "addVideoChunk's fourth argument (compositionTimeOffset), when provided, must be a real number."
+        );
+      }
+      let data = new Uint8Array(sample.byteLength);
+      sample.copyTo(data);
+      this.addVideoChunkRaw(
+        data,
+        sample.type,
+        timestamp ?? sample.timestamp,
+        sample.duration,
+        meta,
+        compositionTimeOffset
+      );
+    }
+    addVideoChunkRaw(data, type, timestamp, duration, meta, compositionTimeOffset) {
+      if (!(data instanceof Uint8Array)) {
+        throw new TypeError("addVideoChunkRaw's first argument (data) must be an instance of Uint8Array.");
+      }
+      if (type !== "key" && type !== "delta") {
+        throw new TypeError("addVideoChunkRaw's second argument (type) must be either 'key' or 'delta'.");
+      }
+      if (!Number.isFinite(timestamp) || timestamp < 0) {
+        throw new TypeError("addVideoChunkRaw's third argument (timestamp) must be a non-negative real number.");
+      }
+      if (!Number.isFinite(duration) || duration < 0) {
+        throw new TypeError("addVideoChunkRaw's fourth argument (duration) must be a non-negative real number.");
+      }
+      if (meta && typeof meta !== "object") {
+        throw new TypeError("addVideoChunkRaw's fifth argument (meta), when provided, must be an object.");
+      }
+      if (compositionTimeOffset !== void 0 && !Number.isFinite(compositionTimeOffset)) {
+        throw new TypeError(
+          "addVideoChunkRaw's sixth argument (compositionTimeOffset), when provided, must be a real number."
+        );
+      }
+      __privateMethod(this, _ensureNotFinalized, ensureNotFinalized_fn).call(this);
+      if (!__privateGet(this, _options).video)
+        throw new Error("No video track declared.");
+      if (typeof __privateGet(this, _options).fastStart === "object" && __privateGet(this, _videoTrack).samples.length === __privateGet(this, _options).fastStart.expectedVideoChunks) {
+        throw new Error(`Cannot add more video chunks than specified in 'fastStart' (${__privateGet(this, _options).fastStart.expectedVideoChunks}).`);
+      }
+      let videoSample = __privateMethod(this, _createSampleForTrack, createSampleForTrack_fn).call(this, __privateGet(this, _videoTrack), data, type, timestamp, duration, meta, compositionTimeOffset);
+      if (__privateGet(this, _options).fastStart === "fragmented" && __privateGet(this, _audioTrack)) {
+        while (__privateGet(this, _audioSampleQueue).length > 0 && __privateGet(this, _audioSampleQueue)[0].decodeTimestamp <= videoSample.decodeTimestamp) {
+          let audioSample = __privateGet(this, _audioSampleQueue).shift();
+          __privateMethod(this, _addSampleToTrack, addSampleToTrack_fn).call(this, __privateGet(this, _audioTrack), audioSample);
+        }
+        if (videoSample.decodeTimestamp <= __privateGet(this, _audioTrack).lastDecodeTimestamp) {
+          __privateMethod(this, _addSampleToTrack, addSampleToTrack_fn).call(this, __privateGet(this, _videoTrack), videoSample);
+        } else {
+          __privateGet(this, _videoSampleQueue).push(videoSample);
+        }
+      } else {
+        __privateMethod(this, _addSampleToTrack, addSampleToTrack_fn).call(this, __privateGet(this, _videoTrack), videoSample);
+      }
+    }
+    addAudioChunk(sample, meta, timestamp) {
+      if (!(sample instanceof EncodedAudioChunk)) {
+        throw new TypeError("addAudioChunk's first argument (sample) must be of type EncodedAudioChunk.");
+      }
+      if (meta && typeof meta !== "object") {
+        throw new TypeError("addAudioChunk's second argument (meta), when provided, must be an object.");
+      }
+      if (timestamp !== void 0 && (!Number.isFinite(timestamp) || timestamp < 0)) {
+        throw new TypeError(
+          "addAudioChunk's third argument (timestamp), when provided, must be a non-negative real number."
+        );
+      }
+      let data = new Uint8Array(sample.byteLength);
+      sample.copyTo(data);
+      this.addAudioChunkRaw(data, sample.type, timestamp ?? sample.timestamp, sample.duration, meta);
+    }
+    addAudioChunkRaw(data, type, timestamp, duration, meta) {
+      if (!(data instanceof Uint8Array)) {
+        throw new TypeError("addAudioChunkRaw's first argument (data) must be an instance of Uint8Array.");
+      }
+      if (type !== "key" && type !== "delta") {
+        throw new TypeError("addAudioChunkRaw's second argument (type) must be either 'key' or 'delta'.");
+      }
+      if (!Number.isFinite(timestamp) || timestamp < 0) {
+        throw new TypeError("addAudioChunkRaw's third argument (timestamp) must be a non-negative real number.");
+      }
+      if (!Number.isFinite(duration) || duration < 0) {
+        throw new TypeError("addAudioChunkRaw's fourth argument (duration) must be a non-negative real number.");
+      }
+      if (meta && typeof meta !== "object") {
+        throw new TypeError("addAudioChunkRaw's fifth argument (meta), when provided, must be an object.");
+      }
+      __privateMethod(this, _ensureNotFinalized, ensureNotFinalized_fn).call(this);
+      if (!__privateGet(this, _options).audio)
+        throw new Error("No audio track declared.");
+      if (typeof __privateGet(this, _options).fastStart === "object" && __privateGet(this, _audioTrack).samples.length === __privateGet(this, _options).fastStart.expectedAudioChunks) {
+        throw new Error(`Cannot add more audio chunks than specified in 'fastStart' (${__privateGet(this, _options).fastStart.expectedAudioChunks}).`);
+      }
+      let audioSample = __privateMethod(this, _createSampleForTrack, createSampleForTrack_fn).call(this, __privateGet(this, _audioTrack), data, type, timestamp, duration, meta);
+      if (__privateGet(this, _options).fastStart === "fragmented" && __privateGet(this, _videoTrack)) {
+        while (__privateGet(this, _videoSampleQueue).length > 0 && __privateGet(this, _videoSampleQueue)[0].decodeTimestamp <= audioSample.decodeTimestamp) {
+          let videoSample = __privateGet(this, _videoSampleQueue).shift();
+          __privateMethod(this, _addSampleToTrack, addSampleToTrack_fn).call(this, __privateGet(this, _videoTrack), videoSample);
+        }
+        if (audioSample.decodeTimestamp <= __privateGet(this, _videoTrack).lastDecodeTimestamp) {
+          __privateMethod(this, _addSampleToTrack, addSampleToTrack_fn).call(this, __privateGet(this, _audioTrack), audioSample);
+        } else {
+          __privateGet(this, _audioSampleQueue).push(audioSample);
+        }
+      } else {
+        __privateMethod(this, _addSampleToTrack, addSampleToTrack_fn).call(this, __privateGet(this, _audioTrack), audioSample);
+      }
+    }
+    /** Finalizes the file, making it ready for use. Must be called after all video and audio chunks have been added. */
+    finalize() {
+      if (__privateGet(this, _finalized)) {
+        throw new Error("Cannot finalize a muxer more than once.");
+      }
+      if (__privateGet(this, _options).fastStart === "fragmented") {
+        for (let videoSample of __privateGet(this, _videoSampleQueue))
+          __privateMethod(this, _addSampleToTrack, addSampleToTrack_fn).call(this, __privateGet(this, _videoTrack), videoSample);
+        for (let audioSample of __privateGet(this, _audioSampleQueue))
+          __privateMethod(this, _addSampleToTrack, addSampleToTrack_fn).call(this, __privateGet(this, _audioTrack), audioSample);
+        __privateMethod(this, _finalizeFragment, finalizeFragment_fn).call(this, false);
+      } else {
+        if (__privateGet(this, _videoTrack))
+          __privateMethod(this, _finalizeCurrentChunk, finalizeCurrentChunk_fn).call(this, __privateGet(this, _videoTrack));
+        if (__privateGet(this, _audioTrack))
+          __privateMethod(this, _finalizeCurrentChunk, finalizeCurrentChunk_fn).call(this, __privateGet(this, _audioTrack));
+      }
+      let tracks = [__privateGet(this, _videoTrack), __privateGet(this, _audioTrack)].filter(Boolean);
+      if (__privateGet(this, _options).fastStart === "in-memory") {
+        let mdatSize;
+        for (let i = 0; i < 2; i++) {
+          let movieBox2 = moov(tracks, __privateGet(this, _creationTime));
+          let movieBoxSize = __privateGet(this, _writer).measureBox(movieBox2);
+          mdatSize = __privateGet(this, _writer).measureBox(__privateGet(this, _mdat));
+          let currentChunkPos = __privateGet(this, _writer).pos + movieBoxSize + mdatSize;
+          for (let chunk of __privateGet(this, _finalizedChunks)) {
+            chunk.offset = currentChunkPos;
+            for (let { data } of chunk.samples) {
+              currentChunkPos += data.byteLength;
+              mdatSize += data.byteLength;
+            }
+          }
+          if (currentChunkPos < 2 ** 32)
+            break;
+          if (mdatSize >= 2 ** 32)
+            __privateGet(this, _mdat).largeSize = true;
+        }
+        let movieBox = moov(tracks, __privateGet(this, _creationTime));
+        __privateGet(this, _writer).writeBox(movieBox);
+        __privateGet(this, _mdat).size = mdatSize;
+        __privateGet(this, _writer).writeBox(__privateGet(this, _mdat));
+        for (let chunk of __privateGet(this, _finalizedChunks)) {
+          for (let sample of chunk.samples) {
+            __privateGet(this, _writer).write(sample.data);
+            sample.data = null;
+          }
+        }
+      } else if (__privateGet(this, _options).fastStart === "fragmented") {
+        let startPos = __privateGet(this, _writer).pos;
+        let mfraBox = mfra(tracks);
+        __privateGet(this, _writer).writeBox(mfraBox);
+        let mfraBoxSize = __privateGet(this, _writer).pos - startPos;
+        __privateGet(this, _writer).seek(__privateGet(this, _writer).pos - 4);
+        __privateGet(this, _writer).writeU32(mfraBoxSize);
+      } else {
+        let mdatPos = __privateGet(this, _writer).offsets.get(__privateGet(this, _mdat));
+        let mdatSize = __privateGet(this, _writer).pos - mdatPos;
+        __privateGet(this, _mdat).size = mdatSize;
+        __privateGet(this, _mdat).largeSize = mdatSize >= 2 ** 32;
+        __privateGet(this, _writer).patchBox(__privateGet(this, _mdat));
+        let movieBox = moov(tracks, __privateGet(this, _creationTime));
+        if (typeof __privateGet(this, _options).fastStart === "object") {
+          __privateGet(this, _writer).seek(__privateGet(this, _ftypSize));
+          __privateGet(this, _writer).writeBox(movieBox);
+          let remainingBytes = mdatPos - __privateGet(this, _writer).pos;
+          __privateGet(this, _writer).writeBox(free(remainingBytes));
+        } else {
+          __privateGet(this, _writer).writeBox(movieBox);
+        }
+      }
+      __privateMethod(this, _maybeFlushStreamingTargetWriter, maybeFlushStreamingTargetWriter_fn).call(this);
+      __privateGet(this, _writer).finalize();
+      __privateSet(this, _finalized, true);
+    }
+  };
+  _options = new WeakMap();
+  _writer = new WeakMap();
+  _ftypSize = new WeakMap();
+  _mdat = new WeakMap();
+  _videoTrack = new WeakMap();
+  _audioTrack = new WeakMap();
+  _creationTime = new WeakMap();
+  _finalizedChunks = new WeakMap();
+  _nextFragmentNumber = new WeakMap();
+  _videoSampleQueue = new WeakMap();
+  _audioSampleQueue = new WeakMap();
+  _finalized = new WeakMap();
+  _validateOptions = new WeakSet();
+  validateOptions_fn = function(options) {
+    if (typeof options !== "object") {
+      throw new TypeError("The muxer requires an options object to be passed to its constructor.");
+    }
+    if (!(options.target instanceof Target)) {
+      throw new TypeError("The target must be provided and an instance of Target.");
+    }
+    if (options.video) {
+      if (!SUPPORTED_VIDEO_CODECS.includes(options.video.codec)) {
+        throw new TypeError(`Unsupported video codec: ${options.video.codec}`);
+      }
+      if (!Number.isInteger(options.video.width) || options.video.width <= 0) {
+        throw new TypeError(`Invalid video width: ${options.video.width}. Must be a positive integer.`);
+      }
+      if (!Number.isInteger(options.video.height) || options.video.height <= 0) {
+        throw new TypeError(`Invalid video height: ${options.video.height}. Must be a positive integer.`);
+      }
+      const videoRotation = options.video.rotation;
+      if (typeof videoRotation === "number" && ![0, 90, 180, 270].includes(videoRotation)) {
+        throw new TypeError(`Invalid video rotation: ${videoRotation}. Has to be 0, 90, 180 or 270.`);
+      } else if (Array.isArray(videoRotation) && (videoRotation.length !== 9 || videoRotation.some((value) => typeof value !== "number"))) {
+        throw new TypeError(`Invalid video transformation matrix: ${videoRotation.join()}`);
+      }
+      if (options.video.frameRate !== void 0 && (!Number.isInteger(options.video.frameRate) || options.video.frameRate <= 0)) {
+        throw new TypeError(
+          `Invalid video frame rate: ${options.video.frameRate}. Must be a positive integer.`
+        );
+      }
+    }
+    if (options.audio) {
+      if (!SUPPORTED_AUDIO_CODECS.includes(options.audio.codec)) {
+        throw new TypeError(`Unsupported audio codec: ${options.audio.codec}`);
+      }
+      if (!Number.isInteger(options.audio.numberOfChannels) || options.audio.numberOfChannels <= 0) {
+        throw new TypeError(
+          `Invalid number of audio channels: ${options.audio.numberOfChannels}. Must be a positive integer.`
+        );
+      }
+      if (!Number.isInteger(options.audio.sampleRate) || options.audio.sampleRate <= 0) {
+        throw new TypeError(
+          `Invalid audio sample rate: ${options.audio.sampleRate}. Must be a positive integer.`
+        );
+      }
+    }
+    if (options.firstTimestampBehavior && !FIRST_TIMESTAMP_BEHAVIORS.includes(options.firstTimestampBehavior)) {
+      throw new TypeError(`Invalid first timestamp behavior: ${options.firstTimestampBehavior}`);
+    }
+    if (typeof options.fastStart === "object") {
+      if (options.video) {
+        if (options.fastStart.expectedVideoChunks === void 0) {
+          throw new TypeError(`'fastStart' is an object but is missing property 'expectedVideoChunks'.`);
+        } else if (!Number.isInteger(options.fastStart.expectedVideoChunks) || options.fastStart.expectedVideoChunks < 0) {
+          throw new TypeError(`'expectedVideoChunks' must be a non-negative integer.`);
+        }
+      }
+      if (options.audio) {
+        if (options.fastStart.expectedAudioChunks === void 0) {
+          throw new TypeError(`'fastStart' is an object but is missing property 'expectedAudioChunks'.`);
+        } else if (!Number.isInteger(options.fastStart.expectedAudioChunks) || options.fastStart.expectedAudioChunks < 0) {
+          throw new TypeError(`'expectedAudioChunks' must be a non-negative integer.`);
+        }
+      }
+    } else if (![false, "in-memory", "fragmented"].includes(options.fastStart)) {
+      throw new TypeError(`'fastStart' option must be false, 'in-memory', 'fragmented' or an object.`);
+    }
+  };
+  _writeHeader = new WeakSet();
+  writeHeader_fn = function() {
+    __privateGet(this, _writer).writeBox(ftyp({
+      holdsAvc: __privateGet(this, _options).video?.codec === "avc",
+      fragmented: __privateGet(this, _options).fastStart === "fragmented"
+    }));
+    __privateSet(this, _ftypSize, __privateGet(this, _writer).pos);
+    if (__privateGet(this, _options).fastStart === "in-memory") {
+      __privateSet(this, _mdat, mdat(false));
+    } else if (__privateGet(this, _options).fastStart === "fragmented") {
+    } else {
+      if (typeof __privateGet(this, _options).fastStart === "object") {
+        let moovSizeUpperBound = __privateMethod(this, _computeMoovSizeUpperBound, computeMoovSizeUpperBound_fn).call(this);
+        __privateGet(this, _writer).seek(__privateGet(this, _writer).pos + moovSizeUpperBound);
+      }
+      __privateSet(this, _mdat, mdat(true));
+      __privateGet(this, _writer).writeBox(__privateGet(this, _mdat));
+    }
+    __privateMethod(this, _maybeFlushStreamingTargetWriter, maybeFlushStreamingTargetWriter_fn).call(this);
+  };
+  _computeMoovSizeUpperBound = new WeakSet();
+  computeMoovSizeUpperBound_fn = function() {
+    if (typeof __privateGet(this, _options).fastStart !== "object")
+      return;
+    let upperBound = 0;
+    let sampleCounts = [
+      __privateGet(this, _options).fastStart.expectedVideoChunks,
+      __privateGet(this, _options).fastStart.expectedAudioChunks
+    ];
+    for (let n of sampleCounts) {
+      if (!n)
+        continue;
+      upperBound += (4 + 4) * Math.ceil(2 / 3 * n);
+      upperBound += 4 * n;
+      upperBound += (4 + 4 + 4) * Math.ceil(2 / 3 * n);
+      upperBound += 4 * n;
+      upperBound += 8 * n;
+    }
+    upperBound += 4096;
+    return upperBound;
+  };
+  _prepareTracks = new WeakSet();
+  prepareTracks_fn = function() {
+    if (__privateGet(this, _options).video) {
+      __privateSet(this, _videoTrack, {
+        id: 1,
+        info: {
+          type: "video",
+          codec: __privateGet(this, _options).video.codec,
+          width: __privateGet(this, _options).video.width,
+          height: __privateGet(this, _options).video.height,
+          rotation: __privateGet(this, _options).video.rotation ?? 0,
+          decoderConfig: null
+        },
+        // The fallback contains many common frame rates as factors
+        timescale: __privateGet(this, _options).video.frameRate ?? 57600,
+        samples: [],
+        finalizedChunks: [],
+        currentChunk: null,
+        firstDecodeTimestamp: void 0,
+        lastDecodeTimestamp: -1,
+        timeToSampleTable: [],
+        compositionTimeOffsetTable: [],
+        lastTimescaleUnits: null,
+        lastSample: null,
+        compactlyCodedChunkTable: []
+      });
+    }
+    if (__privateGet(this, _options).audio) {
+      __privateSet(this, _audioTrack, {
+        id: __privateGet(this, _options).video ? 2 : 1,
+        info: {
+          type: "audio",
+          codec: __privateGet(this, _options).audio.codec,
+          numberOfChannels: __privateGet(this, _options).audio.numberOfChannels,
+          sampleRate: __privateGet(this, _options).audio.sampleRate,
+          decoderConfig: null
+        },
+        timescale: __privateGet(this, _options).audio.sampleRate,
+        samples: [],
+        finalizedChunks: [],
+        currentChunk: null,
+        firstDecodeTimestamp: void 0,
+        lastDecodeTimestamp: -1,
+        timeToSampleTable: [],
+        compositionTimeOffsetTable: [],
+        lastTimescaleUnits: null,
+        lastSample: null,
+        compactlyCodedChunkTable: []
+      });
+      if (__privateGet(this, _options).audio.codec === "aac") {
+        let guessedCodecPrivate = __privateMethod(this, _generateMpeg4AudioSpecificConfig, generateMpeg4AudioSpecificConfig_fn).call(
+          this,
+          2,
+          // Object type for AAC-LC, since it's the most common
+          __privateGet(this, _options).audio.sampleRate,
+          __privateGet(this, _options).audio.numberOfChannels
+        );
+        __privateGet(this, _audioTrack).info.decoderConfig = {
+          codec: __privateGet(this, _options).audio.codec,
+          description: guessedCodecPrivate,
+          numberOfChannels: __privateGet(this, _options).audio.numberOfChannels,
+          sampleRate: __privateGet(this, _options).audio.sampleRate
+        };
+      }
+    }
+  };
+  _generateMpeg4AudioSpecificConfig = new WeakSet();
+  generateMpeg4AudioSpecificConfig_fn = function(objectType, sampleRate, numberOfChannels) {
+    let frequencyIndices = [96e3, 88200, 64e3, 48e3, 44100, 32e3, 24e3, 22050, 16e3, 12e3, 11025, 8e3, 7350];
+    let frequencyIndex = frequencyIndices.indexOf(sampleRate);
+    let channelConfig = numberOfChannels;
+    let configBits = "";
+    configBits += objectType.toString(2).padStart(5, "0");
+    configBits += frequencyIndex.toString(2).padStart(4, "0");
+    if (frequencyIndex === 15)
+      configBits += sampleRate.toString(2).padStart(24, "0");
+    configBits += channelConfig.toString(2).padStart(4, "0");
+    let paddingLength = Math.ceil(configBits.length / 8) * 8;
+    configBits = configBits.padEnd(paddingLength, "0");
+    let configBytes = new Uint8Array(configBits.length / 8);
+    for (let i = 0; i < configBits.length; i += 8) {
+      configBytes[i / 8] = parseInt(configBits.slice(i, i + 8), 2);
+    }
+    return configBytes;
+  };
+  _createSampleForTrack = new WeakSet();
+  createSampleForTrack_fn = function(track, data, type, timestamp, duration, meta, compositionTimeOffset) {
+    let presentationTimestampInSeconds = timestamp / 1e6;
+    let decodeTimestampInSeconds = (timestamp - (compositionTimeOffset ?? 0)) / 1e6;
+    let durationInSeconds = duration / 1e6;
+    let adjusted = __privateMethod(this, _validateTimestamp, validateTimestamp_fn).call(this, presentationTimestampInSeconds, decodeTimestampInSeconds, track);
+    presentationTimestampInSeconds = adjusted.presentationTimestamp;
+    decodeTimestampInSeconds = adjusted.decodeTimestamp;
+    if (meta?.decoderConfig) {
+      if (track.info.decoderConfig === null) {
+        track.info.decoderConfig = meta.decoderConfig;
+      } else {
+        Object.assign(track.info.decoderConfig, meta.decoderConfig);
+      }
+    }
+    let sample = {
+      presentationTimestamp: presentationTimestampInSeconds,
+      decodeTimestamp: decodeTimestampInSeconds,
+      duration: durationInSeconds,
+      data,
+      size: data.byteLength,
+      type,
+      // Will be refined once the next sample comes in
+      timescaleUnitsToNextSample: intoTimescale(durationInSeconds, track.timescale)
+    };
+    return sample;
+  };
+  _addSampleToTrack = new WeakSet();
+  addSampleToTrack_fn = function(track, sample) {
+    if (__privateGet(this, _options).fastStart !== "fragmented") {
+      track.samples.push(sample);
+    }
+    const sampleCompositionTimeOffset = intoTimescale(sample.presentationTimestamp - sample.decodeTimestamp, track.timescale);
+    if (track.lastTimescaleUnits !== null) {
+      let timescaleUnits = intoTimescale(sample.decodeTimestamp, track.timescale, false);
+      let delta = Math.round(timescaleUnits - track.lastTimescaleUnits);
+      track.lastTimescaleUnits += delta;
+      track.lastSample.timescaleUnitsToNextSample = delta;
+      if (__privateGet(this, _options).fastStart !== "fragmented") {
+        let lastTableEntry = last(track.timeToSampleTable);
+        if (lastTableEntry.sampleCount === 1) {
+          lastTableEntry.sampleDelta = delta;
+          lastTableEntry.sampleCount++;
+        } else if (lastTableEntry.sampleDelta === delta) {
+          lastTableEntry.sampleCount++;
+        } else {
+          lastTableEntry.sampleCount--;
+          track.timeToSampleTable.push({
+            sampleCount: 2,
+            sampleDelta: delta
+          });
+        }
+        const lastCompositionTimeOffsetTableEntry = last(track.compositionTimeOffsetTable);
+        if (lastCompositionTimeOffsetTableEntry.sampleCompositionTimeOffset === sampleCompositionTimeOffset) {
+          lastCompositionTimeOffsetTableEntry.sampleCount++;
+        } else {
+          track.compositionTimeOffsetTable.push({
+            sampleCount: 1,
+            sampleCompositionTimeOffset
+          });
+        }
+      }
+    } else {
+      track.lastTimescaleUnits = 0;
+      if (__privateGet(this, _options).fastStart !== "fragmented") {
+        track.timeToSampleTable.push({
+          sampleCount: 1,
+          sampleDelta: intoTimescale(sample.duration, track.timescale)
+        });
+        track.compositionTimeOffsetTable.push({
+          sampleCount: 1,
+          sampleCompositionTimeOffset
+        });
+      }
+    }
+    track.lastSample = sample;
+    let beginNewChunk = false;
+    if (!track.currentChunk) {
+      beginNewChunk = true;
+    } else {
+      let currentChunkDuration = sample.presentationTimestamp - track.currentChunk.startTimestamp;
+      if (__privateGet(this, _options).fastStart === "fragmented") {
+        let mostImportantTrack = __privateGet(this, _videoTrack) ?? __privateGet(this, _audioTrack);
+        if (track === mostImportantTrack && sample.type === "key" && currentChunkDuration >= 1) {
+          beginNewChunk = true;
+          __privateMethod(this, _finalizeFragment, finalizeFragment_fn).call(this);
+        }
+      } else {
+        beginNewChunk = currentChunkDuration >= 0.5;
+      }
+    }
+    if (beginNewChunk) {
+      if (track.currentChunk) {
+        __privateMethod(this, _finalizeCurrentChunk, finalizeCurrentChunk_fn).call(this, track);
+      }
+      track.currentChunk = {
+        startTimestamp: sample.presentationTimestamp,
+        samples: []
+      };
+    }
+    track.currentChunk.samples.push(sample);
+  };
+  _validateTimestamp = new WeakSet();
+  validateTimestamp_fn = function(presentationTimestamp, decodeTimestamp, track) {
+    const strictTimestampBehavior = __privateGet(this, _options).firstTimestampBehavior === "strict";
+    const noLastDecodeTimestamp = track.lastDecodeTimestamp === -1;
+    const timestampNonZero = decodeTimestamp !== 0;
+    if (strictTimestampBehavior && noLastDecodeTimestamp && timestampNonZero) {
+      throw new Error(
+        `The first chunk for your media track must have a timestamp of 0 (received DTS=${decodeTimestamp}).Non-zero first timestamps are often caused by directly piping frames or audio data from a MediaStreamTrack into the encoder. Their timestamps are typically relative to the age of thedocument, which is probably what you want.
+
+If you want to offset all timestamps of a track such that the first one is zero, set firstTimestampBehavior: 'offset' in the options.
+`
+      );
+    } else if (__privateGet(this, _options).firstTimestampBehavior === "offset" || __privateGet(this, _options).firstTimestampBehavior === "cross-track-offset") {
+      if (track.firstDecodeTimestamp === void 0) {
+        track.firstDecodeTimestamp = decodeTimestamp;
+      }
+      let baseDecodeTimestamp;
+      if (__privateGet(this, _options).firstTimestampBehavior === "offset") {
+        baseDecodeTimestamp = track.firstDecodeTimestamp;
+      } else {
+        baseDecodeTimestamp = Math.min(
+          __privateGet(this, _videoTrack)?.firstDecodeTimestamp ?? Infinity,
+          __privateGet(this, _audioTrack)?.firstDecodeTimestamp ?? Infinity
+        );
+      }
+      decodeTimestamp -= baseDecodeTimestamp;
+      presentationTimestamp -= baseDecodeTimestamp;
+    }
+    if (decodeTimestamp < track.lastDecodeTimestamp) {
+      throw new Error(
+        `Timestamps must be monotonically increasing (DTS went from ${track.lastDecodeTimestamp * 1e6} to ${decodeTimestamp * 1e6}).`
+      );
+    }
+    track.lastDecodeTimestamp = decodeTimestamp;
+    return { presentationTimestamp, decodeTimestamp };
+  };
+  _finalizeCurrentChunk = new WeakSet();
+  finalizeCurrentChunk_fn = function(track) {
+    if (__privateGet(this, _options).fastStart === "fragmented") {
+      throw new Error("Can't finalize individual chunks if 'fastStart' is set to 'fragmented'.");
+    }
+    if (!track.currentChunk)
+      return;
+    track.finalizedChunks.push(track.currentChunk);
+    __privateGet(this, _finalizedChunks).push(track.currentChunk);
+    if (track.compactlyCodedChunkTable.length === 0 || last(track.compactlyCodedChunkTable).samplesPerChunk !== track.currentChunk.samples.length) {
+      track.compactlyCodedChunkTable.push({
+        firstChunk: track.finalizedChunks.length,
+        // 1-indexed
+        samplesPerChunk: track.currentChunk.samples.length
+      });
+    }
+    if (__privateGet(this, _options).fastStart === "in-memory") {
+      track.currentChunk.offset = 0;
+      return;
+    }
+    track.currentChunk.offset = __privateGet(this, _writer).pos;
+    for (let sample of track.currentChunk.samples) {
+      __privateGet(this, _writer).write(sample.data);
+      sample.data = null;
+    }
+    __privateMethod(this, _maybeFlushStreamingTargetWriter, maybeFlushStreamingTargetWriter_fn).call(this);
+  };
+  _finalizeFragment = new WeakSet();
+  finalizeFragment_fn = function(flushStreamingWriter = true) {
+    if (__privateGet(this, _options).fastStart !== "fragmented") {
+      throw new Error("Can't finalize a fragment unless 'fastStart' is set to 'fragmented'.");
+    }
+    let tracks = [__privateGet(this, _videoTrack), __privateGet(this, _audioTrack)].filter((track) => track && track.currentChunk);
+    if (tracks.length === 0)
+      return;
+    let fragmentNumber = __privateWrapper(this, _nextFragmentNumber)._++;
+    if (fragmentNumber === 1) {
+      let movieBox = moov(tracks, __privateGet(this, _creationTime), true);
+      __privateGet(this, _writer).writeBox(movieBox);
+    }
+    let moofOffset = __privateGet(this, _writer).pos;
+    let moofBox = moof(fragmentNumber, tracks);
+    __privateGet(this, _writer).writeBox(moofBox);
+    {
+      let mdatBox = mdat(false);
+      let totalTrackSampleSize = 0;
+      for (let track of tracks) {
+        for (let sample of track.currentChunk.samples) {
+          totalTrackSampleSize += sample.size;
+        }
+      }
+      let mdatSize = __privateGet(this, _writer).measureBox(mdatBox) + totalTrackSampleSize;
+      if (mdatSize >= 2 ** 32) {
+        mdatBox.largeSize = true;
+        mdatSize = __privateGet(this, _writer).measureBox(mdatBox) + totalTrackSampleSize;
+      }
+      mdatBox.size = mdatSize;
+      __privateGet(this, _writer).writeBox(mdatBox);
+    }
+    for (let track of tracks) {
+      track.currentChunk.offset = __privateGet(this, _writer).pos;
+      track.currentChunk.moofOffset = moofOffset;
+      for (let sample of track.currentChunk.samples) {
+        __privateGet(this, _writer).write(sample.data);
+        sample.data = null;
+      }
+    }
+    let endPos = __privateGet(this, _writer).pos;
+    __privateGet(this, _writer).seek(__privateGet(this, _writer).offsets.get(moofBox));
+    let newMoofBox = moof(fragmentNumber, tracks);
+    __privateGet(this, _writer).writeBox(newMoofBox);
+    __privateGet(this, _writer).seek(endPos);
+    for (let track of tracks) {
+      track.finalizedChunks.push(track.currentChunk);
+      __privateGet(this, _finalizedChunks).push(track.currentChunk);
+      track.currentChunk = null;
+    }
+    if (flushStreamingWriter) {
+      __privateMethod(this, _maybeFlushStreamingTargetWriter, maybeFlushStreamingTargetWriter_fn).call(this);
+    }
+  };
+  _maybeFlushStreamingTargetWriter = new WeakSet();
+  maybeFlushStreamingTargetWriter_fn = function() {
+    if (__privateGet(this, _writer) instanceof StreamTargetWriter) {
+      __privateGet(this, _writer).flush();
+    }
+  };
+  _ensureNotFinalized = new WeakSet();
+  ensureNotFinalized_fn = function() {
+    if (__privateGet(this, _finalized)) {
+      throw new Error("Cannot add new video or audio chunks after the file has been finalized.");
+    }
+  };
+  return __toCommonJS(src_exports);
+})();
+if (typeof module === "object" && typeof module.exports === "object") Object.assign(module.exports, Mp4Muxer)
+
+</script>
+</body>
+</html>
