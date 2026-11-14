@@ -1,0 +1,200 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>
+/* v7.0 modern UI — brand is the logo orange (#FFD117 → #FD5A03 → #EA3D02) on black.
+   --blue/--cyan keep their names so the 56 var() usages update, but now hold orange values. */
+:root{
+  --bg0:#000000; --bg:#0b0908; --bg2:#171210;
+  --card:rgba(28,20,14,.72); --card2:rgba(38,26,16,.85);
+  --blue:#ea3d02; --blue2:#fd5a03; --cyan:#ff9f1c; --cyan2:#ea3d02;
+  --gold:#ffd117; --gold2:#ffcf3d;
+  --grad:linear-gradient(135deg,#ffd117 0%,#fd5a03 55%,#ea3d02 100%);
+  --ink:#fff7ed; --muted:#c9b8a3; --line:#3a2c1e; --danger:#f87171; --ok:#34d399;
+  --shadow:0 12px 40px rgba(0,0,0,.5);
+}
+/* v7.0 light theme — warm white/cream, same orange brand. Toggled by the header button, saved in localStorage (ms_theme). */
+[data-theme="light"]{
+  --bg0:#fff7ed; --bg:#fffaf3; --bg2:#ffedd5;
+  --card:rgba(255,255,255,.88); --card2:rgba(255,247,237,.95);
+  --blue:#ea3d02; --blue2:#fd5a03; --cyan:#e8590c; --cyan2:#ea3d02;
+  --gold:#ffd117; --gold2:#ffcf3d;
+  --ink:#1c1410; --muted:#7a6a58; --line:#e8d5bf;
+  --shadow:0 12px 32px rgba(234,61,2,.14);
+}
+/* v7.0 light-theme overrides for elements with hardcoded dark colours. */
+[data-theme="light"] body{background:radial-gradient(1100px 600px at 85% -10%,#ffe8cc 0%,transparent 55%),radial-gradient(900px 500px at -10% 10%,#ffd9a8 0%,transparent 50%),linear-gradient(180deg,#fffaf3,#fff1e0 70%)}
+[data-theme="light"] header{background:rgba(255,250,243,.88)}
+[data-theme="light"] input,[data-theme="light"] select,[data-theme="light"] textarea{background:#fff}
+[data-theme="light"] .card h2,[data-theme="light"] .stat b,[data-theme="light"] .feature h3,[data-theme="light"] .plan .price{color:var(--ink)}
+[data-theme="light"] .profileMenu,[data-theme="light"] .profileModal .card{background:#fffaf3}
+[data-theme="light"] .heroBadge{background:rgba(253,90,3,.12);border-color:rgba(253,90,3,.4);color:#c2410c}
+[data-theme="light"] .demo{background:rgba(253,90,3,.08);color:#7c2d12}
+[data-theme="light"] button.ghost{background:rgba(0,0,0,.04)}
+[data-theme="light"] .tab{background:rgba(0,0,0,.04)}
+[data-theme="light"] .histItem{background:rgba(0,0,0,.03)}
+[data-theme="light"] .pmItem:hover{background:rgba(253,90,3,.08)}
+[data-theme="light"] .profileMenu{border-color:rgba(0,0,0,.12)}
+[data-theme="light"] .notice{background:linear-gradient(90deg,#ffedd5,#fdba74);border-color:#ea580c}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:radial-gradient(1100px 600px at 85% -10%,#7c2d12 0%,transparent 55%),radial-gradient(900px 500px at -10% 10%,#9a3412 0%,transparent 50%),linear-gradient(180deg,#0b0908,#000000 70%);background-attachment:fixed;min-height:100vh}
+a{color:var(--cyan)}
+header{position:sticky;top:0;z-index:20;background:rgba(12,8,5,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.wrap{max-width:1680px;margin:0 auto;padding:0 16px}
+.topbar{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 0;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-size:24px;font-weight:800;letter-spacing:.3px}
+.brandLogo{width:38px;height:38px;border-radius:10px;box-shadow:0 0 14px rgba(253,90,3,.55);flex:0 0 auto}
+.brandText{color:var(--ink)}
+.brandText b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brandStudio{font-size:12px;letter-spacing:4px;color:var(--muted);font-weight:700}
+.themeBtn{padding:8px 10px;margin:0;border-radius:10px}
+.themeBtn svg{width:20px;height:20px;display:block}
+.themeBtn .iconMoon{display:none}
+[data-theme="light"] .themeBtn .iconSun{display:none}
+[data-theme="light"] .themeBtn .iconMoon{display:block}
+.ico{width:1.15em;height:1.15em;vertical-align:-.18em}
+.feature .ic .ico{width:30px;height:30px;vertical-align:middle}
+.heroLogo{width:96px;height:96px;border-radius:24px;box-shadow:0 0 32px rgba(253,90,3,.5),0 12px 32px rgba(0,0,0,.45);margin-bottom:10px}
+nav a{color:var(--ink);text-decoration:none;margin:0 8px;font-weight:600}
+nav a:hover{color:var(--cyan)}
+.ticker{background:var(--grad);color:#fff;font-weight:700;overflow:hidden;white-space:nowrap;padding:6px 0}
+.ticker span{display:inline-block;padding-left:100%;animation:tick 22s linear infinite}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+.notice{background:linear-gradient(90deg,#fde68a,#fbbf24);border:1px solid #d97706;border-radius:10px;padding:12px 16px;margin:14px 0;color:#451a03;font-weight:700;text-align:center}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:16px 0;box-shadow:var(--shadow);animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card h2{margin:0 0 10px;font-size:19px;color:#fff}
+.card h2 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.card h3{margin:14px 0 6px;font-size:16px;color:var(--cyan)}
+label{display:block;font-weight:600;margin:10px 0 4px}
+input,select,textarea{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:#1a120a;color:var(--ink);font:14px/1.5 system-ui}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--blue2);border-color:var(--blue2)}
+textarea{font-family:ui-monospace,Consolas,monospace}
+button{padding:11px 18px;border:0;border-radius:12px;background:var(--blue2);color:#fff;font-weight:700;cursor:pointer;margin:6px 6px 0 0;transition:transform .15s ease,box-shadow .15s ease,filter .15s ease}
+button:hover{transform:translateY(-1px);filter:brightness(1.08)}
+button:active{transform:translateY(0) scale(.98)}
+button.gold,button.grad{background:var(--grad);color:#fff;box-shadow:0 8px 22px rgba(253,90,3,.45)}
+button.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--ink)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row>*{flex:1;min-width:160px}
+.muted{color:var(--muted);font-size:13px}
+#authMsg.msgErr{background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.55);color:#fca5a5;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:13.5px}
+#authMsg.msgOk{background:rgba(34,197,94,.13);border:1px solid rgba(34,197,94,.5);color:#86efac;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:13.5px}
+.pwWrap{position:relative}
+.pwWrap input{padding-right:42px}
+.pwToggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--muted);cursor:pointer;line-height:1;padding:4px 6px;margin:0;display:flex;align-items:center}
+.pwToggle svg{display:block}
+.pwToggle:hover{transform:translateY(-50%);filter:none;color:var(--ink)}
+.pill{display:inline-block;background:rgba(253,138,30,.14);border:1px solid var(--line);border-radius:999px;padding:3px 10px;margin:2px;font-size:12.5px}
+.pill.pro{background:var(--grad);color:#fff;border-color:transparent;font-weight:700}
+/* Profile menu (v6.13): avatar button + dropdown in the header, settings modal */
+#authBox{position:relative}
+.avatarBtn{width:40px;height:40px;border-radius:50%;border:2px solid var(--cyan);background:var(--grad);color:#fff;font-weight:800;font-size:17px;cursor:pointer;overflow:hidden;padding:0;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.avatarBtn img{width:100%;height:100%;object-fit:cover;display:block}
+.avatarBtn .avatarIcon{width:22px;height:22px}
+.profileMenu{position:absolute;right:0;top:48px;width:240px;background:#1a120a;backdrop-filter:blur(28px) saturate(1.2);-webkit-backdrop-filter:blur(28px) saturate(1.2);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:8px;box-shadow:0 12px 32px rgba(0,0,0,.6);z-index:50}
+.profileMenu .pmHead{padding:10px 12px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.profileMenu .pmHead b{display:block;font-size:15px}
+.profileMenu .pmHead span{display:block;font-size:12.5px;color:var(--muted);word-break:break-all}
+.pmItem{display:block;width:100%;text-align:left;background:none;border:0;color:var(--ink);font:inherit;font-weight:600;padding:10px 12px;border-radius:10px;cursor:pointer}
+.pmItem:hover{background:rgba(255,255,255,.07)}
+.profileModal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.profileModal .card{max-width:420px;width:100%;margin:0;background:#1a120a}
+.profileAvatar{width:96px;height:96px;border-radius:50%;border:3px solid var(--cyan);background:var(--grad);color:#fff;font-weight:800;font-size:38px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0 auto}
+.profileAvatar img{width:100%;height:100%;object-fit:cover;display:block}
+.profileAvatar .avatarIcon{width:48px;height:48px}
+/* Disabled buttons look clearly inactive (v6.14: Generate Motion is disabled until an image is loaded). */
+button:disabled{opacity:.45;cursor:not-allowed}
+.planGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.plan{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px;transition:transform .15s ease,border-color .15s ease}
+.plan:hover{transform:translateY(-2px);border-color:var(--blue2)}
+.plan.pop{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 10px 26px rgba(253,138,30,.18)}
+.plan .price{font-size:26px;font-weight:800;color:#fff}
+.plan .price small{font-size:14px;color:var(--cyan)}
+.previewWrap{position:relative;width:100%;margin:8px auto;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:#000}
+iframe.preview{position:absolute;left:0;top:0;display:block;border:0;background:#fff}
+#bokehOv{position:absolute;left:0;top:0;pointer-events:none;opacity:0}
+video{width:100%;border-radius:10px;background:#000}
+progress{width:100%;height:12px;appearance:none;-webkit-appearance:none;background:rgba(255,255,255,.12);border-radius:999px}
+progress::-webkit-progress-bar{background:rgba(255,255,255,.12);border-radius:999px}
+progress::-webkit-progress-value{background:var(--grad);border-radius:999px}
+progress::-moz-progress-bar{background:var(--grad);border-radius:999px}
+.hidden{display:none!important}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+td,th{border:1px solid var(--line);padding:6px;text-align:left}
+footer{color:var(--muted);text-align:center;padding:24px 10px 40px;font-size:13px}
+.demo{background:rgba(253,138,30,.12);border:1px solid var(--line);color:#ffe7d1;border-radius:10px;padding:10px 14px;margin:14px 0}
+/* hero + auth landing */
+.hero{text-align:center;padding:44px 16px 10px;animation:fadeUp .6s ease both}
+.heroBadge{display:inline-block;padding:6px 14px;border-radius:999px;background:rgba(253,138,30,.14);border:1px solid rgba(253,138,30,.45);color:#ffd9a8;font-weight:700;font-size:13px;letter-spacing:.4px}
+.hero h1{font-size:clamp(28px,5vw,46px);line-height:1.15;margin:16px 0 10px;font-weight:800}
+.hero h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--muted);max-width:640px;margin:0 auto;font-size:16px}
+.heroCtas{margin-top:18px}
+.statRow{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 18px;text-align:center}
+.stat b{display:block;font-size:20px;color:#fff}
+.stat span{font-size:12px;color:var(--muted)}
+.authGrid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;align-items:start}
+@media(max-width:760px){.authGrid{grid-template-columns:1fr}}
+/* v7.0 mobile header: row 1 = logo (left) + theme toggle + profile (right);
+   row 2 = nav links centred. Keeps the desktop alignment (logo left, nav
+   centre, controls right) instead of letting the bar wrap awkwardly. */
+@media(max-width:760px){
+  .brand{font-size:20px;gap:8px}
+  .brandLogo{width:32px;height:32px;border-radius:8px}
+  .brandStudio{font-size:10px;letter-spacing:3px}
+  .topbar nav{order:3;flex-basis:100%;display:flex;justify-content:center;flex-wrap:wrap;gap:2px 6px}
+  .topbar nav a{font-size:14px;padding:4px 6px}
+}
+/* studio layout (v6.9 Motion Hero style): AI sidebar left, main work area right (preview top, code, edit, export) */
+.studioRow{display:flex;gap:16px;align-items:flex-start;margin-top:8px}
+#aiSidebar{width:360px;flex:0 0 360px;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:10px}
+#studioMain{flex:1;min-width:0}
+.studioRow.hideSidebar #aiSidebar{display:none}
+#aiSidebar h3{margin-top:4px}
+#aiSidebar h3:first-child{margin-top:0}
+.histItem{display:block;width:100%;text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 10px;margin:6px 0 0;font-weight:600;font-size:13px;cursor:pointer}
+.histItem:hover{border-color:var(--blue2)}
+.histItem.cur{border-color:var(--cyan);background:rgba(253,138,30,.12)}
+.histItem small{display:block;font-weight:400;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Image to Animation (v6.11): drop zone + thumbnail */
+#imgDrop{border:2px dashed var(--line);border-radius:12px;padding:14px;text-align:center;color:var(--muted);cursor:pointer;font-size:13px}
+#imgDrop.over{border-color:var(--cyan);background:rgba(253,138,30,.08);color:var(--ink)}
+#imgThumb{max-width:100%;max-height:150px;border-radius:10px;display:block;margin:8px auto 0}
+@media(max-width:900px){.studioRow{flex-direction:column}.studioRow #aiSidebar{width:100%;flex:1 1 auto}}
+/* v6.9 Motion Hero style: main work area is a vertical stack (preview, code, edit, export) */
+.mhSection{margin-top:16px}
+/* code editor never collapses to a thin strip (v6.6) */
+#src{min-height:220px}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tab{flex:1;padding:10px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--ink);font-weight:700;cursor:pointer;text-align:center}
+.tab.active{background:var(--grad);border-color:transparent;color:#fff}
+.featureGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.feature{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.feature .ic{font-size:26px}
+.feature h3{margin:8px 0 4px;color:#fff}
+.faqItem{border:1px solid var(--line);border-radius:12px;margin:8px 0;overflow:hidden}
+.faqItem summary{cursor:pointer;padding:12px 14px;font-weight:700;list-style:none}
+.faqItem summary::-webkit-details-marker{display:none}
+.faqItem div{padding:0 14px 12px;color:var(--muted)}
+input[type=range]{padding:0;accent-color:var(--cyan)}
+.editGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px 16px}
+input[type=color]{padding:2px;height:40px;cursor:pointer}
+.comingSoon{padding:14px;border-radius:12px;background:linear-gradient(135deg,rgba(253,90,3,.18),rgba(253,138,30,.12));border:1px dashed var(--cyan);font-weight:700;color:var(--cyan)}
+.badge95{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:999px;background:var(--grad);color:#fff;font-weight:800;box-shadow:0 8px 22px rgba(253,90,3,.45);animation:glow 2.4s ease-in-out infinite}
+@keyframes glow{0%,100%{box-shadow:0 8px 22px rgba(253,90,3,.45)}50%{box-shadow:0 8px 30px rgba(253,138,30,.65)}}
+</style></head>
+<body style="margin:0;background:#222">
+<div style="width:390px;margin:0 auto;background:#000;border:2px solid red;box-sizing:border-box">
+<header><div class="wrap topbar">
+  <div class="brand"><img class="brandLogo" src="data:image/jpeg;base64,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" alt="MotionStock Studio logo"><span class="brandText">Motion<b>Stock</b> <span class="brandStudio">STUDIO</span></span></div>
+  <nav><a href="#studio" id="navStudio">Studio</a><a href="#prompt" id="navPrompt">Prompt</a><a href="#plansLanding" id="navPlans">Plans</a><a href="#pro" id="navPro">Pro</a><a href="#faq" id="navFaq">FAQ</a><a href="#admin" id="navAdmin" class="hidden">Admin</a></nav>
+  <div style="display:flex;gap:8px;align-items:center">
+  <button id="btnTheme" class="ghost themeBtn" title="Switch dark / light mode" aria-label="Switch dark or light mode"><svg class="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg><svg class="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+  <div id="authBox"><button id="btnShowAuth" class="ghost">Log In / Sign Up</button></div>
+  </div>
+</div></header>
+<div style="padding:12px;color:#fff;font-family:sans-serif;font-size:13px">--- content below header (for alignment reference) ---</div>
+</div>
+<div style="width:390px;margin:8px auto;color:#fff;font-family:sans-serif;font-size:13px">Above is the header at 390px width (red border = phone screen edge). Check: row 1 = logo left + sun/profile right; row 2 = nav links centred.</div>
+</body></html>
